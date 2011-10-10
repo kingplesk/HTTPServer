@@ -1,33 +1,26 @@
-main bauen...
+Description:
+---
+- Learning project: Try to build a HTTPServer with C++/Qt
 
-  httpServer
-  //connect -> httpServer, newRequest; httpResponse, newResponse
-  connect -> httpRequest, newRequest; httpResponse, newResponse
+Content:
+---
+- Qt/Event-Driven HTTPServer without Threading
+- JSON communication
 
-HTTPServer bauen...
+lighttpd config
+---
+# cat /etc/lighttpd/conf-enabled/10-proxy.conf 
+server.modules   += ( "mod_proxy" )
 
-  QTcpServer -> server
+## Redirect all queries requested by e.g. http://www.example.invalid/test 
+## define port via server.start
 
-  constructor ->
-    connect -> server, newConnection; this , newConnection
+proxy.server  = ( "test" => ( 
+                       ( "host" => "127.0.0.1",
+                         "port" => 8888 ))
+                )
 
-  start -> listen
 
-  newConnection -> nextPendingConnection
-  while (socket)
-    HTTPParser
-    connect -> HTTPParser, finished; parseFinished
-
-  parseFinished -> emit newRequest(HTTPRequest(parser))
-  ---
-
-  signals:
-    void newRequest(HTTPRequest request)
-
-  private slots:
-    newConnection
-    parseFinished
-
-HTTRrequest bauen...
-HTTPResponse bauen...
-HTTPParser bauen...
+Contact:
+---
+- via github.com: andreaseri/HTTPServer 
