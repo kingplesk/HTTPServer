@@ -19,7 +19,7 @@ void Server::start(qint16 port)
 
 void Server::incomingConnection( int descriptor )
 {
-    qDebug( "Server::incomingConnection" );
+    qDebug( "START Server::incomingConnection" );
 
     ClientSocket * socket = new ClientSocket(this, &request_, &response_, &parser_);
 
@@ -27,4 +27,6 @@ void Server::incomingConnection( int descriptor )
         qDebug( "Socket error." );
         return;
     }
+
+    qDebug( "END Server::incomingConnection" );
 }

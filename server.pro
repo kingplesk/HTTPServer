@@ -6,6 +6,7 @@
 
 QT       += core
 QT       += network
+QT       += script
 
 QT       -= gui
 
@@ -21,14 +22,16 @@ SOURCES += main.cpp \
     httprequest.cpp \
     clientsocket.cpp \
     httpresponse.cpp \
-    httpparser.cpp
+    httpparser.cpp \
+    clienthandler.cpp
 
 HEADERS += \
     server.h \
     httprequest.h \
     clientsocket.h \
     httpresponse.h \
-    httpparser.h
+    httpparser.h \
+    clienthandler.h
 
 OTHER_FILES += \
     README.txt

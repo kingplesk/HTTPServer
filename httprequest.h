@@ -3,6 +3,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include "clienthandler.h"
 
 class HTTPRequest : public QObject
 {
@@ -14,6 +15,9 @@ class HTTPRequest : public QObject
 
     signals:
         void newRequest(QByteArray request);
+
+    private:
+        ClientHandler clientHandler_;
 
 };
 

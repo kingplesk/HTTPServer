@@ -2,7 +2,7 @@
 
 #include "httpparser.h"
 
-HTTPParser::HTTPParser(QObject *parent) :
+HTTPParser::HTTPParser(QObject * parent) :
     QObject(parent)
 {    
 }
@@ -64,7 +64,7 @@ void HTTPParser::readClient()
             emit readyRead(data_);
         }
         else {
-            if (headerRead && header_->value("content-length").toInt() == data_.size()) {
+            if (headerRead && header_->value("content-length").toInt() <= data_.size()) {
                 body_ = data_;
 
                 qDebug() << "BODY 0: " + body_;
