@@ -1,37 +1,18 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2011-09-26T20:48:51
-#
-#-------------------------------------------------
+CONFIG   += qt debug_and_release
+CONFIG   += ordered
 
-QT       += core
-QT       += network
-QT       += script
+TEMPLATE = subdirs
 
-QT       -= gui
+SUBDIRS += \
+    server \
+    plugins
 
-TARGET = server
-CONFIG   += console
-CONFIG   -= app_bundle
+server.depends = plugins
 
-TEMPLATE = app
-
-
-SOURCES += main.cpp \
-    server.cpp \
-    httprequest.cpp \
-    clientsocket.cpp \
-    httpresponse.cpp \
-    httpparser.cpp \
-    clienthandler.cpp
-
-HEADERS += \
-    server.h \
-    httprequest.h \
-    clientsocket.h \
-    httpresponse.h \
-    httpparser.h \
-    clienthandler.h
+target.path = ./
+sources.files = $$SOURCES $$HEADERS $$RESOURCES $$FORMS server.pro README.txt
+sources.path = ./
+INSTALLS += target sources
 
 OTHER_FILES += \
     README.txt
