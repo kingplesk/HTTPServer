@@ -3,12 +3,12 @@
 #include "httprequest.h"
 #include "clienthandler.h"
 
-HTTPRequest::HTTPRequest(QObject * parent) :
+HttpRequest::HttpRequest(QObject * parent) :
     QObject(parent), clientHandler_()
 {
 }
 
-void HTTPRequest::requestReady(QHttpRequestHeader header, QByteArray body)
+void HttpRequest::requestReady(QHttpRequestHeader header, QByteArray body)
 {
     qDebug() << "newRequest:" << header.path();
 

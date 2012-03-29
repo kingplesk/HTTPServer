@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     httpparser.cpp \
     clienthandler.cpp \
     test.cpp \
-    comet.cpp
+    comet.cpp \
+    http.cpp
 
 HEADERS += \
     server.h \
@@ -36,7 +37,9 @@ HEADERS += \
     clienthandler.h \
     myinterface.h \
     test.h \
-    comet.h
+    comet.h \
+    http.h \
+    http_p.h
 
 OTHER_FILES += \
     qt.conf

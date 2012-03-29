@@ -2,28 +2,29 @@
 
 #include "httpparser.h"
 
-HTTPParser::HTTPParser(QObject * parent) :
+HttpParser::HttpParser(QObject * parent) :
     QObject(parent)
 {    
 }
 
-void HTTPParser::init(QTcpSocket * socket)
+void HttpParser::parseNext(QTcpSocket * socket)
 {
-    socket_ = socket;
-
     bytesRead_ = 0;
     header_;
-    body_ = "";
     data_ = "";
+    socket_ = socket;
+
+    this->connect(socket_, SIGNAL(disconnected()), SLOT(deleteLater()));
+    this->connect(socket_, SIGNAL(readyRead()), SLOT(parseRequestData()));
 }
 
-void HTTPParser::readClient()
+void HttpParser::parseRequestData()
 {
-    qint64 avail = 0;
     int pos = 0;
+    qint64 avail = 0;
     QByteArray header = "";
 
-    qDebug() << "readClient";
+    //qDebug() << "parseRequestData";
 
     avail = socket_->bytesAvailable();
 
@@ -45,35 +46,39 @@ void HTTPParser::readClient()
 
         bytesRead_ += avail;
 
-        qDebug() << "AVAIL: " + avail;
-
         int headerSize = header.size();
         if (headerSize > 0) {
             header_ = new QHttpRequestHeader((QString)header);
-
             data_.remove(0, headerSize);
 
-            qDebug() << "HEADER 0: " + data_;
-            qDebug() << "HEADER 1: " + header;
-            qDebug() << "HEADER 2: " + (QString)header;
-            qDebug() << "HEADER 3: " + header_->toString();
+            //qDebug() << "Header: " + header_->toString();
         }
 
         bool headerRead = data_.size() < bytesRead_;
         if ( headerRead && !header_->hasContentLength()) {
-            emit readyRead(* header_, data_);
+            //qDebug() << "Body: 0:" + data_;
+            //emit parserReady(* header_, data_);
+            ready();
         }
         else {
             if (headerRead && header_->value("content-length").toInt() <= data_.size()) {
-                body_ = data_;
-
-                qDebug() << "BODY 0: " + body_;
-
-                emit readyRead(* header_, data_);
+                //qDebug() << "Body: >0" + data_;
+                //emit parserReady(* header_, data_);
+                ready();
             }
         }
-
     }
 }
 
-//void HTTPParser::
+void HttpParser::ready()
+{
+    this->disconnect(socket_, SIGNAL(readyRead()));
+    emit parserReady();
+}
+
+void HttpParser::sendReply()
+{
+    socket_->write("response");
+    socket_->close();
+}
+

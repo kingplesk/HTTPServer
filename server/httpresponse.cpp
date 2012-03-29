@@ -2,12 +2,12 @@
 
 #include "httpresponse.h"
 
-HTTPResponse::HTTPResponse(QObject *parent) :
+HttpResponse::HttpResponse(QObject *parent) :
     QObject(parent)
 {
 }
 
-void HTTPResponse::newResponse(QHttpRequestHeader header, QByteArray body)
+void HttpResponse::newResponse(QHttpRequestHeader header, QByteArray body)
 {
     qDebug() << "newResponse:";
 

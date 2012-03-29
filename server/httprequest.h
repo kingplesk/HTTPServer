@@ -8,12 +8,12 @@
 #include "comet.h"
 #include "clienthandler.h"
 
-class HTTPRequest : public QObject
+class HttpRequest : public QObject
 {
     Q_OBJECT
 
     public:
-        explicit HTTPRequest(QObject * parent = 0);
+        explicit HttpRequest(QObject * parent = 0);
         void requestReady(QHttpRequestHeader header, QByteArray body);
 
     signals:

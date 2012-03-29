@@ -10,6 +10,6 @@ DESTDIR       = ../../server/plugins
 
 # install
 target.path = ../../server/plugins
-sources.files = $$SOURCES $$HEADERS $$RESOURCES $$FORMS directory.pro
+sources.files = $$SOURCES $$HEADERS directory.pro
 sources.path = ../../plugins/directory
 INSTALLS += target sources

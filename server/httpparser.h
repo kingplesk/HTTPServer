@@ -4,27 +4,30 @@
 #include <QTcpSocket>
 #include <QHttpRequestHeader>
 #include <QObject>
+#include "http.h"
 
-class HTTPParser : public QObject
+class HttpParser : public QObject
 {
     Q_OBJECT
 
     public:
-        explicit HTTPParser(QObject *parent = 0);
-        void init(QTcpSocket * socket);
+        explicit HttpParser(QObject * parent = 0);
+        void parseNext(QTcpSocket * socket = 0);
+        void sendReply();
+        void ready();
 
     signals:
-        void readyRead(QHttpRequestHeader header, QByteArray body);
+        //void parserReady(QHttpRequestHeader, QByteArray);
+        void parserReady();
 
     public slots:
-        void readClient();
+        void parseRequestData();
 
     private:
         QByteArray data_;
         QTcpSocket * socket_;
         QHttpRequestHeader * header_;
         qint64 bytesRead_;
-        QByteArray body_;
 
 };
 

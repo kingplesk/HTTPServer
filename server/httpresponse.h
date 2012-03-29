@@ -6,12 +6,12 @@
 #include <QByteArray>
 #include <QHttpRequestHeader>
 
-class HTTPResponse : public QObject
+class HttpResponse : public QObject
 {
     Q_OBJECT
 
     public:
-        explicit HTTPResponse(QObject *parent = 0);
+        explicit HttpResponse(QObject *parent = 0);
 
     public slots:
         void newResponse(QHttpRequestHeader header, QByteArray body);

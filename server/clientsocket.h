@@ -12,16 +12,16 @@ class ClientSocket : public QTcpSocket
     Q_OBJECT
 
     public:
-        explicit ClientSocket(QObject * parent, HTTPRequest * request, HTTPResponse * response, HTTPParser * parser);
+        explicit ClientSocket(QObject * parent, HttpRequest * request, HttpResponse * response, HttpParser * parser);
 
     public slots:
         void readClient(QHttpRequestHeader header, QByteArray body);
         void send(QByteArray response);
 
     private:
-        HTTPRequest * request_;
-        HTTPResponse * response_;
-        HTTPParser * parser_;
+        HttpRequest * request_;
+        HttpResponse * response_;
+        HttpParser * parser_;
 
 };
 
