@@ -1,10 +1,9 @@
 #include "server.h"
+#include "http.h"
 
-Server::Server(QObject * parent) : QTcpServer(parent)//, http_()
+Server::Server(QObject * parent) : QTcpServer(parent)
 {
     i_ = 0;
-    //connect(&parser_, SIGNAL(parserReady(QHttpRequestHeader, QByteArray)), this, SLOT(newRequest(QHttpRequestHeader, QByteArray)));
-    //connect(&http_, SIGNAL(newRequest()), this, SLOT(handle()));
 }
 
 void Server::start(qint16 port)
@@ -16,38 +15,26 @@ void Server::start(qint16 port)
 
 void Server::incomingConnection( int descriptor )
 {
-    //qDebug( "START Server::incomingConnection" );
+    Http * http = new Http(this);
 
-    HttpParser * parser = new HttpParser(this);
-    QTcpSocket * socket = new QTcpSocket(parser);
-
-
-    //Http * http = new Http(this);
-
-    if ( !socket->setSocketDescriptor(descriptor) ) {
+    if ( !http->setSocketDescriptor(descriptor) ) {
         qDebug( "Socket error." );
         return;
     }
 
-    this->connect(parser, SIGNAL(parserReady()), SLOT(handle()));
-    parser->parseNext(socket);
-
-    //Http http_(socket);
-    //http_.setSocket(socket);
-    //http_.parse();
-
-    //qDebug( "END Server::incomingConnection" );
+    this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
+    http->parse();
 }
 
 void Server::handle()
 {
-    HttpParser * parser = qobject_cast<HttpParser *>(sender());
-    this->disconnect(parser, SIGNAL(parserReady()));
+    Http * http = qobject_cast<Http *>(sender());
+    this->disconnect(http, SIGNAL(newRequest()));
 
-    qDebug() << i_++ << parser /*http*//*header.toString()*/;
+    qDebug() << i_++ << http /*header.toString()*/;
 
-    parser->sendReply();
-    parser = 0;
+    http->sendReply();
+    //parser = 0;
 }
 
 void Server::sendReply(QByteArray response)

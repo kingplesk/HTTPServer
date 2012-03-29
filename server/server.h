@@ -1,12 +1,12 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "httprequest.h"
-#include "httpresponse.h"
+//#include "httprequest.h"
+//#include "httpresponse.h"
 #include "httpparser.h"
-#include "clientsocket.h"
+//#include "clientsocket.h"
 
-#include "http.h"
+//#include "http.h"
 
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -35,10 +35,10 @@ class Server : public QTcpServer
 
     private:
         //Http http_;
-        HttpRequest request_;
-        HttpResponse response_;
-        HttpParser parser_;
-        QTcpSocket * socket_;
+        //HttpRequest request_;
+        //HttpResponse response_;
+        //HttpParser parser_;
+        //QTcpSocket * socket_;
         int i_;
 };
 

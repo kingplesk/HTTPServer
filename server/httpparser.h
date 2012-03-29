@@ -4,7 +4,7 @@
 #include <QTcpSocket>
 #include <QHttpRequestHeader>
 #include <QObject>
-#include "http.h"
+//#include "http.h"
 
 class HttpParser : public QObject
 {
@@ -13,7 +13,6 @@ class HttpParser : public QObject
     public:
         explicit HttpParser(QObject * parent = 0);
         void parseNext(QTcpSocket * socket = 0);
-        void sendReply();
         void ready();
 
     signals:

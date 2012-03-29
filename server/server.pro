@@ -19,27 +19,27 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     server.cpp \
-    httprequest.cpp \
-    clientsocket.cpp \
-    httpresponse.cpp \
+    #httprequest.cpp \
+    #clientsocket.cpp \
+    #httpresponse.cpp \
     httpparser.cpp \
-    clienthandler.cpp \
-    test.cpp \
-    comet.cpp \
+    #clienthandler.cpp \
+    #test.cpp \
+    #comet.cpp \
     http.cpp
 
 HEADERS += \
     server.h \
-    httprequest.h \
-    clientsocket.h \
-    httpresponse.h \
+    #httprequest.h \
+    #clientsocket.h \
+    #httpresponse.h \
     httpparser.h \
-    clienthandler.h \
+    #clienthandler.h \
     myinterface.h \
-    test.h \
-    comet.h \
+    #test.h \
+    #comet.h \
     http.h \
-    http_p.h
+    #http_p.h
 
 OTHER_FILES += \
     qt.conf

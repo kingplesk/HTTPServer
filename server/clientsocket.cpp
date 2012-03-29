@@ -3,13 +3,6 @@
 #include "httpparser.h"
 #include "clientsocket.h"
 
-/*
-
-
-  */
-
-
-
 ClientSocket::ClientSocket(QObject * parent, HttpRequest * request, HttpResponse * response, HttpParser * parser) :
     QTcpSocket(parent), request_(request), response_(response), parser_(parser)
 {

@@ -14,7 +14,6 @@ void HttpParser::parseNext(QTcpSocket * socket)
     data_ = "";
     socket_ = socket;
 
-    this->connect(socket_, SIGNAL(disconnected()), SLOT(deleteLater()));
     this->connect(socket_, SIGNAL(readyRead()), SLOT(parseRequestData()));
 }
 
@@ -50,7 +49,6 @@ void HttpParser::parseRequestData()
         if (headerSize > 0) {
             header_ = new QHttpRequestHeader((QString)header);
             data_.remove(0, headerSize);
-
             //qDebug() << "Header: " + header_->toString();
         }
 
@@ -75,10 +73,3 @@ void HttpParser::ready()
     this->disconnect(socket_, SIGNAL(readyRead()));
     emit parserReady();
 }
-
-void HttpParser::sendReply()
-{
-    socket_->write("response");
-    socket_->close();
-}
-
