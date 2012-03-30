@@ -15,8 +15,8 @@ class HttpParser : public QObject
         void ready();
 
     signals:
-        //void parserReady(QHttpRequestHeader, QByteArray);
-        void parserReady();
+        void parserReady(QHttpRequestHeader, QByteArray);
+        //void parserReady(HttpRequest);
 
     public slots:
         void parseRequestData();

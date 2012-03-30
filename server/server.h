@@ -24,7 +24,7 @@ class Server : public QTcpServer
         void sendReply(QByteArray response);
 
     protected:
-        void incomingConnection(int descriptor);
+        //void incomingConnection(int descriptor);
 
     signals:
         void newRequest();
@@ -32,6 +32,7 @@ class Server : public QTcpServer
     protected slots:
         //void newRequest(QHttpRequestHeader header, QByteArray body);
         void handle();
+        void test();
 
     private:
         //Http http_;
@@ -40,7 +41,7 @@ class Server : public QTcpServer
         //HttpParser parser_;
         //QTcpSocket * socket_;
         int i_;
-        QMap<QString, Http> clients_;
+        QMap<QString, Http *> clients_;
 };
 
 #endif // SERVER_H

@@ -72,5 +72,5 @@ void HttpParser::parseRequestData()
 void HttpParser::ready()
 {
     this->disconnect(socket_, SIGNAL(readyRead()));
-    emit parserReady();
+    emit parserReady(* header_, data_);
 }

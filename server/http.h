@@ -7,25 +7,28 @@
 #include "httpparser.h"
 #include "httprequest.h"
 
-class Http : public QTcpSocket
+class Http : public QObject
 {
     Q_OBJECT
 
     public:
-        explicit Http(QObject * parent = 0);
+        explicit Http(QTcpSocket * socket, QObject * parent = 0);
         void sendReply();
         void newComet();
         void parse();
+
+        HttpRequest * request_;
 
     signals:
         void newRequest();
 
     public slots:
-        void parserReady();
+        void closeComet();
+        void parserReady(QHttpRequestHeader header, QByteArray body);
 
     private:
+        QTcpSocket * socket_;
         HttpParser * parser_;
-        HttpRequest * request_;
         QTimer * timer_;
 };
 
