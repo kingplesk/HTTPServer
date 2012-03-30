@@ -1,18 +1,29 @@
 #include "qdebug.h"
 
 #include "httprequest.h"
-#include "clienthandler.h"
 
-HttpRequest::HttpRequest(QObject * parent) :
-    QObject(parent), clientHandler_()
+HttpRequest::HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * parent) :
+    header_(header), body_(body), QObject(parent)
 {
 }
 
-void HttpRequest::requestReady(QHttpRequestHeader header, QByteArray body)
+bool HttpRequest::isComet()
+{
+    return header_.path().contains("notify", Qt::CaseInsensitive);
+}
+
+bool HttpRequest::isAjax()
+{
+    return header_.path().contains("ajax", Qt::CaseInsensitive);
+}
+
+
+/*
+void HttpRequest::requestReady()
 {
     qDebug() << "newRequest:" << header.path();
 
-    if (header.path().contains("notify", Qt::CaseInsensitive)) {
+    if () {
         comet_ = new Comet();
         //connect(&request_, SIGNAL(newRequest(QHttpRequestHeader, QByteArray)), &response_, SLOT(newResponse(QHttpRequestHeader, QByteArray)));
         //connect(comet_, SIGNAL(timeout()), )
@@ -25,3 +36,4 @@ void HttpRequest::requestReady(QHttpRequestHeader header, QByteArray body)
         emit newRequest(header, body);
     }
 }
+*/

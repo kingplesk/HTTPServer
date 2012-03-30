@@ -1,3 +1,4 @@
+
 #include "http.h"
 
 Http::Http(QObject * parent) :
@@ -17,6 +18,13 @@ void Http::parserReady()
 {
     disconnect(parser_, SIGNAL(parserReady()));
     emit newRequest();
+}
+
+void Http::newComet()
+{
+    timer_ = new QTimer(this);
+    timer_->setSingleShot(true);
+    timer_->start(30 * 1000);
 }
 
 void Http::sendReply()

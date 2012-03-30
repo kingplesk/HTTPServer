@@ -19,24 +19,24 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     server.cpp \
-    #httprequest.cpp \
+    httprequest.cpp \
     #clientsocket.cpp \
     #httpresponse.cpp \
     httpparser.cpp \
     #clienthandler.cpp \
-    #test.cpp \
+    test.cpp \
     #comet.cpp \
     http.cpp
 
 HEADERS += \
     server.h \
-    #httprequest.h \
+    httprequest.h \
     #clientsocket.h \
     #httpresponse.h \
     httpparser.h \
     #clienthandler.h \
     myinterface.h \
-    #test.h \
+    test.h \
     #comet.h \
     http.h \
     #http_p.h

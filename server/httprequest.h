@@ -5,24 +5,18 @@
 #include <QByteArray>
 #include <QHttpRequestHeader>
 
-#include "comet.h"
-#include "clienthandler.h"
-
 class HttpRequest : public QObject
 {
     Q_OBJECT
 
     public:
-        explicit HttpRequest(QObject * parent = 0);
-        void requestReady(QHttpRequestHeader header, QByteArray body);
-
-    signals:
-        void newRequest(QHttpRequestHeader header, QByteArray body);
+        explicit HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * parent = 0);
+        bool isComet();
+        bool isAjax();
 
     private:
-        ClientHandler clientHandler_;
-        Comet * comet_;
-
+        QHttpRequestHeader header_;
+        QByteArray body_;
 };
 
 #endif // HTTPREQUEST_H

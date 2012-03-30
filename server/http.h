@@ -1,8 +1,11 @@
 #ifndef HTTP_H
 #define HTTP_H
 
+#include <QTimer>
 #include <QTcpSocket>
+
 #include "httpparser.h"
+#include "httprequest.h"
 
 class Http : public QTcpSocket
 {
@@ -11,6 +14,7 @@ class Http : public QTcpSocket
     public:
         explicit Http(QObject * parent = 0);
         void sendReply();
+        void newComet();
         void parse();
 
     signals:
@@ -21,6 +25,8 @@ class Http : public QTcpSocket
 
     private:
         HttpParser * parser_;
+        HttpRequest * request_;
+        QTimer * timer_;
 };
 
 #endif // HTTP_H

@@ -4,7 +4,6 @@
 #include <QTcpSocket>
 #include <QHttpRequestHeader>
 #include <QObject>
-//#include "http.h"
 
 class HttpParser : public QObject
 {

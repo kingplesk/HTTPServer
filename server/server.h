@@ -3,16 +3,16 @@
 
 //#include "httprequest.h"
 //#include "httpresponse.h"
-#include "httpparser.h"
+//#include "httpparser.h"
 //#include "clientsocket.h"
 
-//#include "http.h"
+#include "http.h"
 
-#include <QTcpServer>
-#include <QTcpSocket>
-#include <QByteArray>
+#include <QMap>
 #include <QObject>
-
+#include <QTcpServer>
+//#include <QTcpSocket>
+//#include <QByteArray>
 
 class Server : public QTcpServer
 {
@@ -40,6 +40,7 @@ class Server : public QTcpServer
         //HttpParser parser_;
         //QTcpSocket * socket_;
         int i_;
+        QMap<QString, Http> clients_;
 };
 
 #endif // SERVER_H
