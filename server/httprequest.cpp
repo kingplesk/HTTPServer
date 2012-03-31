@@ -17,6 +17,19 @@ bool HttpRequest::isAjax()
     return header_.path().contains("ajax", Qt::CaseInsensitive);
 }
 
+QString HttpRequest::getCookie(const QString & name)
+{
+    QRegExp rx(QString("(.*[; ])?%1=([^; ]*).*").arg(name));
+
+    foreach (const QString & line, header_.allValues("Cookie")) {
+        if (rx.exactMatch(line)) {
+            return rx.cap(2);
+        }
+    }
+
+    return QString();
+}
+
 
 /*
 void HttpRequest::requestReady()

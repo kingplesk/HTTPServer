@@ -2,32 +2,42 @@
 #include "http.h"
 #include "server.h"
 
-Server::Server(QObject * parent) : QTcpServer(parent)
+Server::Server(QObject * parent) : QObject(parent)
 {
+    server_ = new QTcpServer(this);
     i_ = 0;
 }
-
+/*
+Server::~Server()
+{
+  server.close();
+}
+*/
 void Server::start(qint16 port)
 {
-    if( !listen(QHostAddress::Any, port) ) {
+    if( !server_->listen(QHostAddress::Any, port) ) {
         qCritical("Cannot listen to Port.");
     }
 
-    connect(this, SIGNAL(newConnection()), this, SLOT(test()));
+    qDebug() << "MaxPendingConnections:" << server_->maxPendingConnections();
+
+    connect(server_, SIGNAL(newConnection()), this, SLOT(test()));
 }
 
 void Server::test()
 {
-    qDebug() << "test";
-    QTcpSocket * socket = this->nextPendingConnection();
+    QTcpSocket * socket = server_->nextPendingConnection();
+
+    qDebug() << " ---- " << server_->hasPendingConnections();
+
     while (socket) {
         Http * http = new Http(socket, this);
         qDebug() << i_ << "START incoming";
         this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
         http->parse();
 
-        socket = this->nextPendingConnection();
-        qDebug() << i_ << "END incoming";
+        socket = server_->nextPendingConnection();
+        //qDebug() << i_ << "END incoming";
     }
 }
 
@@ -57,13 +67,27 @@ void Server::handle()
     Http * http = qobject_cast<Http *>(sender());
     this->disconnect(http, SIGNAL(newRequest()));
 
-    if (http->request_->isComet()) {
-        http->newComet();
+    ClientHandler * ch = 0;
+
+    QString sid = http->request_->getCookie("sid");
+    if (!sid.isEmpty() && clients_.contains(sid)) {
+        ch = clients_[sid];
+    }
+    else {
+        ch = new ClientHandler(this);
+        clients_[sid] = ch;
     }
 
-    clients_[QString(i_)] = http;
+    ch->http_ = http;
 
-    qDebug() << i_++ << http->request_ /*header.toString()*/;
+    if (http->request_->isComet()) {
+        ch->newComet();
+    }
+    else {
+        http->sendReply();
+    }
+
+    qDebug() << ch->i_++ << http->request_ /*header.toString()*/;
 
     //http->sendReply();
     //parser = 0;

@@ -2,18 +2,28 @@
 #define CLIENTHANDLER_H
 
 #include <QObject>
+#include <QTimer>
 #include <QByteArray>
+
+#include "http.h"
 
 class ClientHandler : public QObject
 {
     Q_OBJECT
-public:
-    explicit ClientHandler(QObject *parent = 0);
-    QByteArray getHandler(QByteArray snippet);
 
-signals:
+    public:
+        explicit ClientHandler(QObject *parent = 0);
+        void newComet();
 
-public slots:
+        qint16 i_;
+        Http * http_;
+
+    signals:
+
+    public slots:
+
+    private:
+        QTimer * timer_;
 
 };
 

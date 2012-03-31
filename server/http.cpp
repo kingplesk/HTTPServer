@@ -21,14 +21,6 @@ void Http::parserReady(QHttpRequestHeader header, QByteArray body)
     emit newRequest();
 }
 
-void Http::newComet()
-{
-    timer_ = new QTimer(this);
-    connect(timer_, SIGNAL(timeout()), this, SLOT(closeComet()));
-    timer_->setSingleShot(true);
-    timer_->start(30 * 1000);
-}
-
 void Http::closeComet()
 {
     sendReply();
@@ -39,6 +31,7 @@ void Http::sendReply()
 
     socket_->write("HTTP/1.1 200 OK\r\n"
           "Connection: close\r\n"
+          "Set-Cookie: sid=1;\r\n"
           "Content-Type: text/html\r\n\r\n"
           "CONTENT");
     socket_->close();

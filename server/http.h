@@ -14,7 +14,6 @@ class Http : public QObject
     public:
         explicit Http(QTcpSocket * socket, QObject * parent = 0);
         void sendReply();
-        void newComet();
         void parse();
 
         HttpRequest * request_;
@@ -29,7 +28,6 @@ class Http : public QObject
     private:
         QTcpSocket * socket_;
         HttpParser * parser_;
-        QTimer * timer_;
 };
 
 #endif // HTTP_H

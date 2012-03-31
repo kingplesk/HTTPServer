@@ -23,7 +23,7 @@ SOURCES += main.cpp \
     #clientsocket.cpp \
     #httpresponse.cpp \
     httpparser.cpp \
-    #clienthandler.cpp \
+    clienthandler.cpp \
     test.cpp \
     #comet.cpp \
     http.cpp
@@ -34,7 +34,7 @@ HEADERS += \
     #clientsocket.h \
     #httpresponse.h \
     httpparser.h \
-    #clienthandler.h \
+    clienthandler.h \
     myinterface.h \
     test.h \
     #comet.h \

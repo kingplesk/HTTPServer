@@ -4,9 +4,9 @@
 //#include "httprequest.h"
 //#include "httpresponse.h"
 //#include "httpparser.h"
-//#include "clientsocket.h"
 
 #include "http.h"
+#include "clienthandler.h"
 
 #include <QMap>
 #include <QObject>
@@ -14,7 +14,7 @@
 //#include <QTcpSocket>
 //#include <QByteArray>
 
-class Server : public QTcpServer
+class Server : public QObject
 {
     Q_OBJECT;
 
@@ -41,7 +41,8 @@ class Server : public QTcpServer
         //HttpParser parser_;
         //QTcpSocket * socket_;
         int i_;
-        QMap<QString, Http *> clients_;
+        QMap<QString, ClientHandler *> clients_;
+        QTcpServer * server_;
 };
 
 #endif // SERVER_H
