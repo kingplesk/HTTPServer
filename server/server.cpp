@@ -46,15 +46,14 @@ void Server::incomingConnection( int descriptor )
 {
     qDebug() << i_ << "START incoming";
 
-    Http * http = new Http(this);
+    QTcpSocket * socket = new QTcpSocket();
 
-    if ( !http->setSocketDescriptor(descriptor) ) {
+    if ( !socket->setSocketDescriptor(descriptor) ) {
         qDebug( "Socket error." );
         return;
     }
 
-    addPendingConnection(http);
-
+    Http * http = new Http(socket, this);
     this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
     http->parse();
 
@@ -78,13 +77,14 @@ void Server::handle()
         clients_[sid] = ch;
     }
 
-    ch->http_ = http;
+    //ch->http_ = http;
 
     if (http->request_->isComet()) {
-        ch->newComet();
+        ch->newComet(http);
     }
-    else {
-        http->sendReply();
+
+    if (http->request_->isAjax()) {
+        ch->newRequest(http);
     }
 
     qDebug() << ch->i_++ << http->request_ /*header.toString()*/;

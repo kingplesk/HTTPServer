@@ -1,5 +1,6 @@
 
 #include "http.h"
+#include "clienthandler.h"
 
 Http::Http(QTcpSocket * socket, QObject * parent) :
     socket_(socket), QObject(parent)
@@ -23,16 +24,19 @@ void Http::parserReady(QHttpRequestHeader header, QByteArray body)
 
 void Http::closeComet()
 {
-    sendReply();
+    //QTimer * t = qobject_cast<QTimer *>(sender());
+    //ClientHandler * ch = (ClientHandler *)t->parent();
+    sendReply(QByteArray("Reply Comet: "));
 }
 
-void Http::sendReply()
+void Http::sendReply(QByteArray body)
 {
 
-    socket_->write("HTTP/1.1 200 OK\r\n"
-          "Connection: close\r\n"
-          "Set-Cookie: sid=1;\r\n"
-          "Content-Type: text/html\r\n\r\n"
-          "CONTENT");
+    QByteArray header("HTTP/1.1 200 OK\r\n"
+                      "Connection: close\r\n"
+                      "Set-Cookie: sid=1;\r\n"
+                      "Content-Type: text/html\r\n\r\n");
+
+    socket_->write(header.append(body));
     socket_->close();
 }

@@ -1,15 +1,20 @@
 
 #include "clienthandler.h"
 
-ClientHandler::ClientHandler(QObject *parent) :
+ClientHandler::ClientHandler(QObject * parent) :
     QObject(parent)
 {
     i_ = 0;
 }
 
-void ClientHandler::newComet()
+void ClientHandler::newComet(Http * http)
 {
     timer_ = new QTimer(this);
-    timer_->singleShot(30 * 1000, http_, SLOT(closeComet()));
+    timer_->singleShot(30 * 1000, http, SLOT(closeComet()));
     //parent()->server_->addPendingConnection(http_->socket_);
+}
+
+void ClientHandler::newRequest(Http * http)
+{
+    http->sendReply(QByteArray("Reply Ajax: ").append((char)i_));
 }

@@ -13,7 +13,7 @@ class Http : public QObject
 
     public:
         explicit Http(QTcpSocket * socket, QObject * parent = 0);
-        void sendReply();
+        void sendReply(QByteArray body);
         void parse();
 
         HttpRequest * request_;
