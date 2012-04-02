@@ -3,7 +3,9 @@
 #include "httprequest.h"
 
 HttpRequest::HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * parent) :
-    header_(header), body_(body), QObject(parent)
+    QObject(parent),
+    header_(header),
+    body_(body)
 {
 }
 
@@ -29,24 +31,3 @@ QString HttpRequest::getCookie(const QString & name)
 
     return QString();
 }
-
-
-/*
-void HttpRequest::requestReady()
-{
-    qDebug() << "newRequest:" << header.path();
-
-    if () {
-        comet_ = new Comet();
-        //connect(&request_, SIGNAL(newRequest(QHttpRequestHeader, QByteArray)), &response_, SLOT(newResponse(QHttpRequestHeader, QByteArray)));
-        //connect(comet_, SIGNAL(timeout()), )
-    }
-    else {
-        QByteArray handler = clientHandler_.getHandler(body);
-
-        qDebug() << handler;
-
-        emit newRequest(header, body);
-    }
-}
-*/

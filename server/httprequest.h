@@ -10,7 +10,7 @@ class HttpRequest : public QObject
     Q_OBJECT
 
     public:
-        explicit HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * parent = 0);
+        HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * parent = 0);
         bool isComet();
         bool isAjax();
         QString getCookie(const QString & name);

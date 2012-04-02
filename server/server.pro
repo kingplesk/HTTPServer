@@ -26,7 +26,8 @@ SOURCES += main.cpp \
     clienthandler.cpp \
     test.cpp \
     #comet.cpp \
-    http.cpp
+    http.cpp \
+    requesthandler.cpp
 
 HEADERS += \
     server.h \
@@ -40,6 +41,7 @@ HEADERS += \
     #comet.h \
     http.h \
     #http_p.h
+    requesthandler.h
 
 OTHER_FILES += \
     qt.conf

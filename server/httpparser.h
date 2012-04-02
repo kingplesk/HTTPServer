@@ -10,21 +10,20 @@ class HttpParser : public QObject
     Q_OBJECT
 
     public:
-        explicit HttpParser(QObject * parent = 0);
+        HttpParser(QObject * parent = 0);
         void parseNext(QTcpSocket * socket = 0);
         void ready();
 
     signals:
         void parserReady(QHttpRequestHeader, QByteArray);
-        //void parserReady(HttpRequest);
 
     public slots:
         void parseRequestData();
 
     private:
-        QByteArray data_;
         QTcpSocket * socket_;
-        QHttpRequestHeader * header_;
+        QByteArray data_;
+        QHttpRequestHeader header_;
         qint64 bytesRead_;
 
 };

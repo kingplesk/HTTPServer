@@ -12,7 +12,7 @@ class Http : public QObject
     Q_OBJECT
 
     public:
-        explicit Http(QTcpSocket * socket, QObject * parent = 0);
+        Http(QTcpSocket * socket, QObject * parent = 0);
         void sendReply(QByteArray body);
         void parse();
 
@@ -24,6 +24,8 @@ class Http : public QObject
     public slots:
         void closeComet();
         void parserReady(QHttpRequestHeader header, QByteArray body);
+        void socketError(QAbstractSocket::SocketError);
+        void socketStateChanged(QAbstractSocket::SocketState);
 
     private:
         QTcpSocket * socket_;

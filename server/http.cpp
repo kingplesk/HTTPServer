@@ -3,9 +3,13 @@
 #include "clienthandler.h"
 
 Http::Http(QTcpSocket * socket, QObject * parent) :
-    socket_(socket), QObject(parent)
+    QObject(parent),
+    socket_(socket)
 {
     connect(socket_, SIGNAL(disconnected()), socket_, SLOT(deleteLater()));
+    connect(socket_, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(socket_, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socketStateChanged(QAbstractSocket::SocketState)));
+
     parser_ = new HttpParser(this);
 }
 
@@ -20,6 +24,16 @@ void Http::parserReady(QHttpRequestHeader header, QByteArray body)
     disconnect(parser_, SIGNAL(parserReady(QHttpRequestHeader, QByteArray)));
     request_ = new HttpRequest(header, body, this);
     emit newRequest();
+}
+
+void Http::socketError(QAbstractSocket::SocketError socketError)
+{
+    qDebug() << "socketErrror:" << socketError;
+}
+
+void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
+{
+    qDebug() << "socketState:" << socketState;
 }
 
 void Http::closeComet()

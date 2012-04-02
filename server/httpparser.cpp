@@ -11,7 +11,7 @@ HttpParser::HttpParser(QObject * parent) :
 void HttpParser::parseNext(QTcpSocket * socket)
 {
     bytesRead_ = 0;
-    header_;
+    header_ = QHttpRequestHeader();;
     data_ = "";
     socket_ = socket;
 
@@ -48,21 +48,16 @@ void HttpParser::parseRequestData()
 
         int headerSize = header.size();
         if (headerSize > 0) {
-            header_ = new QHttpRequestHeader((QString)header);
+            header_ = QHttpRequestHeader(QString(header));
             data_.remove(0, headerSize);
-            //qDebug() << "Header: " + header_->toString();
         }
 
         bool headerRead = data_.size() < bytesRead_;
-        if ( headerRead && !header_->hasContentLength()) {
-            //qDebug() << "Body: 0:" + data_;
-            //emit parserReady(* header_, data_);
+        if ( headerRead && !header_.hasContentLength()) {
             ready();
         }
         else {
-            if (headerRead && header_->value("content-length").toInt() <= data_.size()) {
-                //qDebug() << "Body: >0" + data_;
-                //emit parserReady(* header_, data_);
+            if (headerRead && header_.value("content-length").toInt() <= data_.size()) {
                 ready();
             }
         }
@@ -72,5 +67,5 @@ void HttpParser::parseRequestData()
 void HttpParser::ready()
 {
     this->disconnect(socket_, SIGNAL(readyRead()));
-    emit parserReady(* header_, data_);
+    emit parserReady(header_, data_);
 }

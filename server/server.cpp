@@ -1,65 +1,42 @@
 
 #include "http.h"
+#include "requesthandler.h"
 #include "server.h"
 
 Server::Server(QObject * parent) : QObject(parent)
 {
     server_ = new QTcpServer(this);
+    requestHandler_ = new RequestHandler(this);
+
     i_ = 0;
 }
-/*
+
 Server::~Server()
 {
-  server.close();
+  server_->close();
 }
-*/
+
 void Server::start(qint16 port)
 {
     if( !server_->listen(QHostAddress::Any, port) ) {
         qCritical("Cannot listen to Port.");
     }
 
-    qDebug() << "MaxPendingConnections:" << server_->maxPendingConnections();
-
+    //connect(server_, SIGNAL(newConnection()), requestHandler_, SLOT(handle()));
     connect(server_, SIGNAL(newConnection()), this, SLOT(test()));
 }
 
 void Server::test()
 {
     QTcpSocket * socket = server_->nextPendingConnection();
-
-    qDebug() << " ---- " << server_->hasPendingConnections();
-
     while (socket) {
         Http * http = new Http(socket, this);
-        qDebug() << i_ << "START incoming";
         this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
         http->parse();
 
         socket = server_->nextPendingConnection();
-        //qDebug() << i_ << "END incoming";
     }
 }
-
-/*
-void Server::incomingConnection( int descriptor )
-{
-    qDebug() << i_ << "START incoming";
-
-    QTcpSocket * socket = new QTcpSocket();
-
-    if ( !socket->setSocketDescriptor(descriptor) ) {
-        qDebug( "Socket error." );
-        return;
-    }
-
-    Http * http = new Http(socket, this);
-    this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
-    http->parse();
-
-    qDebug() << i_ << "END incoming";
-}
-*/
 
 void Server::handle()
 {
@@ -77,8 +54,6 @@ void Server::handle()
         clients_[sid] = ch;
     }
 
-    //ch->http_ = http;
-
     if (http->request_->isComet()) {
         ch->newComet(http);
     }
@@ -87,20 +62,5 @@ void Server::handle()
         ch->newRequest(http);
     }
 
-    qDebug() << ch->i_++ << http->request_ /*header.toString()*/;
-
-    //http->sendReply();
-    //parser = 0;
+    qDebug() << ch->i_++ << http->request_;
 }
-
-void Server::sendReply(QByteArray response)
-{
-    //qDebug() << "send:";
-
-    //connect(socket_, SIGNAL(disconnected()), socket_, SLOT(deleteLater()));
-
-    //socket_->write("response");
-    //disconnect(response_, 0, 0, 0);
-    //socket_->disconnectFromHost();
-}
-

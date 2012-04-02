@@ -12,7 +12,7 @@ class ClientHandler : public QObject
     Q_OBJECT
 
     public:
-        explicit ClientHandler(QObject * parent = 0);
+        ClientHandler(QObject * parent = 0);
         void newComet(Http * http);
         void newRequest(Http * http);
 

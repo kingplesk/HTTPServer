@@ -11,7 +11,6 @@ void ClientHandler::newComet(Http * http)
 {
     timer_ = new QTimer(this);
     timer_->singleShot(30 * 1000, http, SLOT(closeComet()));
-    //parent()->server_->addPendingConnection(http_->socket_);
 }
 
 void ClientHandler::newRequest(Http * http)
