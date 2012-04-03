@@ -1,4 +1,6 @@
 
+#include <QUuid>
+
 #include "http.h"
 #include "requesthandler.h"
 #include "server.h"
@@ -23,10 +25,10 @@ void Server::start(qint16 port)
     }
 
     //connect(server_, SIGNAL(newConnection()), requestHandler_, SLOT(handle()));
-    connect(server_, SIGNAL(newConnection()), this, SLOT(test()));
+    connect(server_, SIGNAL(newConnection()), this, SLOT(newConnection()));
 }
 
-void Server::test()
+void Server::newConnection()
 {
     QTcpSocket * socket = server_->nextPendingConnection();
     while (socket) {
@@ -45,13 +47,19 @@ void Server::handle()
 
     ClientHandler * ch = 0;
 
-    QString sid = http->request_->getCookie("sid");
-    if (!sid.isEmpty() && clients_.contains(sid)) {
-        ch = clients_[sid];
+    QString uuid = http->request_->getCookie("sid");
+    if (!uuid.isEmpty() && clients_.contains(uuid)) {
+        ch = clients_[uuid];
     }
     else {
+        do {
+            uuid = QUuid::createUuid().toString();
+        } while(clients_.contains(uuid));
+
+        http->response_->addCookie(uuid);
+
         ch = new ClientHandler(this);
-        clients_[sid] = ch;
+        clients_[uuid] = ch;
     }
 
     if (http->request_->isComet()) {

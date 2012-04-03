@@ -22,18 +22,21 @@ void Http::parse()
 void Http::parserReady(QHttpRequestHeader header, QByteArray body)
 {
     disconnect(parser_, SIGNAL(parserReady(QHttpRequestHeader, QByteArray)));
+
     request_ = new HttpRequest(header, body, this);
+    response_ = new HttpResponse(this);
+
     emit newRequest();
 }
 
 void Http::socketError(QAbstractSocket::SocketError socketError)
 {
-    qDebug() << "socketErrror:" << socketError;
+    //qDebug() << "socketErrror:" << socketError;
 }
 
 void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 {
-    qDebug() << "socketState:" << socketState;
+    //qDebug() << "socketState:" << socketState;
 }
 
 void Http::closeComet()
@@ -45,12 +48,12 @@ void Http::closeComet()
 
 void Http::sendReply(QByteArray body)
 {
-
+/*
     QByteArray header("HTTP/1.1 200 OK\r\n"
                       "Connection: close\r\n"
                       "Set-Cookie: sid=1;\r\n"
                       "Content-Type: text/html\r\n\r\n");
-
-    socket_->write(header.append(body));
+*/
+    socket_->write(response_->getResponse().append(body));
     socket_->close();
 }

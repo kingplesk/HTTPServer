@@ -25,7 +25,7 @@ class Server : public QObject
 
     protected slots:
         void handle();
-        void test();
+        void newConnection();
 
     private:
         int i_;

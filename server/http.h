@@ -6,6 +6,7 @@
 
 #include "httpparser.h"
 #include "httprequest.h"
+#include "httpresponse.h"
 
 class Http : public QObject
 {
@@ -17,6 +18,7 @@ class Http : public QObject
         void parse();
 
         HttpRequest * request_;
+        HttpResponse * response_;
 
     signals:
         void newRequest();

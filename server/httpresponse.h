@@ -11,14 +11,14 @@ class HttpResponse : public QObject
     Q_OBJECT
 
     public:
-        explicit HttpResponse(QObject *parent = 0);
+        HttpResponse(QObject * parent = 0);
+        void addHeader(QString key, QString value);
+        void addCookie(QString cookie);
+        void setBody(QByteArray body);
+        QByteArray getResponse();
 
-    public slots:
-        void newResponse(QHttpRequestHeader header, QByteArray body);
-
-    signals:
-        void send(QByteArray response);
-
+    private:
+        QHttpResponseHeader header_;
 };
 
 #endif // HTTPRESPONSE_H
