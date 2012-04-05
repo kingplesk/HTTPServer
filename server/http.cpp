@@ -4,7 +4,10 @@
 
 Http::Http(QTcpSocket * socket, QObject * parent) :
     QObject(parent),
-    socket_(socket)
+    socket_(socket),
+    request_(0),
+    response_(0),
+    parser_(0)
 {
     connect(socket_, SIGNAL(disconnected()), socket_, SLOT(deleteLater()));
     connect(socket_, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));

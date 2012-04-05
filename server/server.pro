@@ -4,16 +4,18 @@
 #
 #-------------------------------------------------
 
+!include(../config.pri):error("base config file (config.pri) not available")
+
 QT       += core
 QT       += network
 QT       += script
 QT       -= gui
 
-TARGET = server
+TARGET    = server
 
 CONFIG   += console
-#CONFIG   += qt debug_and_release
 CONFIG   -= app_bundle
+#CONFIG   += qt debug_and_release
 
 TEMPLATE = app
 
@@ -46,8 +48,4 @@ HEADERS += \
 OTHER_FILES += \
     qt.conf
 
-# install
-target.path = ./
 sources.files = $$SOURCES $$HEADERS $$RESOURCES $$FORMS server.pro qt.conf
-sources.path = ./
-INSTALLS += target sources

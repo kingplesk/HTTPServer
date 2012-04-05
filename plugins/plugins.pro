@@ -5,7 +5,7 @@ SUBDIRS += \
     export
 
 # install
-target.path = ../plugins
+#target.path = ../plugins
 sources.files = $$SOURCES $$HEADERS $$RESOURCES $$FORMS plugins.pro
-sources.path = ../plugins
-INSTALLS += target sources
+#sources.path = ../plugins
+#INSTALLS += target sources
