@@ -30,8 +30,8 @@ class Server : public QObject
     private:
         int i_;
         QMap<QString, ClientHandler *> clients_;
-        QTcpServer * server_;
-        RequestHandler * requestHandler_;
+        QTcpServer server_;
+        RequestHandler requestHandler_;
 
 };
 

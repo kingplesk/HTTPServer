@@ -34,18 +34,16 @@ void Http::parserReady(QHttpRequestHeader header, QByteArray body)
 
 void Http::socketError(QAbstractSocket::SocketError socketError)
 {
-    //qDebug() << "socketErrror:" << socketError;
+    qDebug() << "socketErrror:" << socketError;
 }
 
 void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 {
-    //qDebug() << "socketState:" << socketState;
+    qDebug() << "socketState:" << socketState;
 }
 
 void Http::closeComet()
 {
-    //QTimer * t = qobject_cast<QTimer *>(sender());
-    //ClientHandler * ch = (ClientHandler *)t->parent();
     sendReply(QByteArray("Reply Comet: "));
 }
 

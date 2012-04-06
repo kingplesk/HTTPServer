@@ -10,6 +10,8 @@ ClientHandler::ClientHandler(QObject * parent) :
 void ClientHandler::newComet(Http * http)
 {
     timer_ = new QTimer(this);
+    //timer_->setSingleShot(true);
+    //timer_->setInterval(30 * 1000);
     timer_->singleShot(30 * 1000, http, SLOT(closeComet()));
 }
 

@@ -5,38 +5,39 @@
 #include "requesthandler.h"
 #include "server.h"
 
-Server::Server(QObject * parent) : QObject(parent)
+Server::Server(QObject * parent) :
+    QObject(parent),
+    server_(),
+    requestHandler_(),
+    clients_()
 {
-    server_ = new QTcpServer(this);
-    requestHandler_ = new RequestHandler(this);
-
     i_ = 0;
 }
 
 Server::~Server()
 {
-  server_->close();
+  server_.close();
 }
 
 void Server::start(qint16 port)
 {
-    if( !server_->listen(QHostAddress::Any, port) ) {
+    if( !server_.listen(QHostAddress::Any, port) ) {
         qCritical("Cannot listen to Port.");
     }
 
-    //connect(server_, SIGNAL(newConnection()), requestHandler_, SLOT(handle()));
-    connect(server_, SIGNAL(newConnection()), this, SLOT(newConnection()));
+    //connect(&server_, SIGNAL(newConnection()), requestHandler_, SLOT(handle()));
+    connect(&server_, SIGNAL(newConnection()), this, SLOT(newConnection()));
 }
 
 void Server::newConnection()
 {
-    QTcpSocket * socket = server_->nextPendingConnection();
+    QTcpSocket * socket = server_.nextPendingConnection();
     while (socket) {
         Http * http = new Http(socket, this);
         this->connect(http, SIGNAL(newRequest()), SLOT(handle()));
         http->parse();
 
-        socket = server_->nextPendingConnection();
+        socket = server_.nextPendingConnection();
     }
 }
 

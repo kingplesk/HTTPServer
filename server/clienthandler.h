@@ -17,7 +17,6 @@ class ClientHandler : public QObject
         void newRequest(Http * http);
 
         qint16 i_;
-        Http * http_;
 
     signals:
 
