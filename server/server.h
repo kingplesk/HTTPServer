@@ -1,13 +1,16 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "http.h"
-#include "clienthandler.h"
-#include "requesthandler.h"
-
+#include <QDir>
 #include <QMap>
 #include <QObject>
 #include <QTcpServer>
+#include <QPluginLoader>
+
+#include "http.h"
+#include "myinterface.h"
+#include "clienthandler.h"
+#include "requesthandler.h"
 
 class Server : public QObject
 {
@@ -19,6 +22,7 @@ class Server : public QObject
 
         void start(qint16 port = 8888);
         void sendReply(QByteArray response);
+        void loadPlugins();
 
     signals:
         void newRequest();
@@ -33,6 +37,10 @@ class Server : public QObject
         QTcpServer server_;
         RequestHandler requestHandler_;
 
+        QDir pluginsDir_;
+        QStringList pluginFileNames_;
+        QMap<QString, MyInterface *> plugins_;
+        QMap<QString, QPluginLoader *> p_;
 };
 
 #endif // SERVER_H
