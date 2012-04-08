@@ -68,11 +68,11 @@ void Server::handle()
     }
 
     if (http->request_->isComet()) {
-        ch->newComet(http);
+        ch->newComet(http, p_);
     }
 
     if (http->request_->isAjax()) {
-        ch->newRequest(http);
+        ch->newRequest(http, p_);
     }
 
     qDebug() << ch->i_++ << http->request_;
@@ -94,49 +94,15 @@ void Server::loadPlugins()
 #endif
     pluginsDir_.cd("plugins");
 
-    //load plugins and store instances in qmap for later use of same instance
-    foreach (QString fileName, pluginsDir_.entryList(QDir::Files)) {
-        QPluginLoader loader(pluginsDir_.absoluteFilePath(fileName));
-
-        QObject *plugin = loader.instance();
-
-        if (plugin) {
-            pluginFileNames_ += fileName;
-
-            plugins_[fileName] = qobject_cast<MyInterface *>(plugin);
-
-            qDebug()  << fileName;
-
-            if (plugins_[fileName])
-                qDebug() << plugins_[fileName]->getString();
-        }
-    }
-
-    qDebug() << plugins_;
-
-
     //load plugins and store loaded plugins in qmap for later use of new instances
     foreach (QString fileName, pluginsDir_.entryList(QDir::Files)) {
         QPluginLoader * l = new QPluginLoader(pluginsDir_.absoluteFilePath(fileName));
         l->load();
         if (l->isLoaded()) {
-
-            fileName.append("_test");
-            p_[fileName] = l;
-
-            QObject *plugin = p_[fileName]->instance();
-
-            MyInterface *mi = qobject_cast<MyInterface *>(plugin);
-
             pluginFileNames_ += fileName;
-
-            qDebug()  << fileName;
-
-            if (mi)
-                qDebug() << mi->getString();
+            p_[fileName] = l;
         }
     }
 
     qDebug() << p_;
-
 }

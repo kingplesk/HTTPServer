@@ -8,7 +8,6 @@
 #include <QPluginLoader>
 
 #include "http.h"
-#include "myinterface.h"
 #include "clienthandler.h"
 #include "requesthandler.h"
 
