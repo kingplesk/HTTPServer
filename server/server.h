@@ -3,6 +3,7 @@
 
 #include <QDir>
 #include <QMap>
+#include <QTimer>
 #include <QObject>
 #include <QTcpServer>
 #include <QPluginLoader>
@@ -22,12 +23,14 @@ class Server : public QObject
         void start(qint16 port = 8888);
         void sendReply(QByteArray response);
         void loadPlugins();
+        void broadcast(QString json);
 
     signals:
         void newRequest();
 
     protected slots:
         void handle();
+        void update();
         void newConnection();
 
     private:
@@ -35,6 +38,7 @@ class Server : public QObject
         QMap<QString, ClientHandler *> clients_;
         QTcpServer server_;
         RequestHandler requestHandler_;
+        QTimer timer_;
 
         QDir pluginsDir_;
         QStringList pluginFileNames_;

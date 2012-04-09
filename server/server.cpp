@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
+#include <QMutableMapIterator>
 
 #include "http.h"
 #include "server.h"
@@ -14,6 +15,9 @@ Server::Server(QObject * parent) :
     clients_()
 {
     i_ = 0;
+
+    connect(&timer_, SIGNAL(timeout()), this, SLOT(update()));
+    timer_.start(30 * 1000);
 
     loadPlugins();
 }
@@ -71,11 +75,31 @@ void Server::handle()
         ch->newComet(http, p_);
     }
 
+    qDebug() << "is Ajax" << http->request_->isAjax();
+
     if (http->request_->isAjax()) {
         ch->newRequest(http, p_);
     }
 
     qDebug() << ch->i_++ << http->request_;
+}
+
+void Server::update()
+{
+    broadcast("huhu");
+}
+
+void Server::broadcast(QString json)
+{
+    qDebug() << json;
+
+    QMutableMapIterator<QString, ClientHandler *> i(clients_);
+    while (i.hasNext()) {
+        i.next();
+        i.value()->sendComet(json);
+
+        qDebug() << i.key() << ": " << i.value();
+    }
 }
 
 void Server::loadPlugins()

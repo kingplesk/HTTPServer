@@ -2,8 +2,9 @@
 #define CLIENTHANDLER_H
 
 #include <QMap>
-#include <QObject>
 #include <QTimer>
+#include <QObject>
+#include <QVector>
 #include <QByteArray>
 #include <QPluginLoader>
 
@@ -16,6 +17,7 @@ class ClientHandler : public QObject
 
     public:
         ClientHandler(QObject * parent = 0);
+        void sendComet(QString json);
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
         MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p);
@@ -28,6 +30,8 @@ class ClientHandler : public QObject
 
     private:
         QTimer * timer_;
+        QVector<Http *> comets_;
+        QVector<Http *> requests_;
 
 };
 
