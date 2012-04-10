@@ -8,4 +8,4 @@ QString Filter::getString()
 
 // export the plugin
 // the TARGET should be "filter" also
-Q_EXPORT_PLUGIN2(pnp_directoryFilter, Filter);
+Q_EXPORT_PLUGIN2(_directoryFilter, Filter);

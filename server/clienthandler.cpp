@@ -31,7 +31,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 {
     requests_.append(http);
 
-    MyInterface *mi = createPluginInstance("libpnp_directoryFilter.so", p);
+    MyInterface *mi = createPluginInstance("directoryFilter", p);
 
     qDebug() << "newRequest";
 

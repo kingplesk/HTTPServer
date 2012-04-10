@@ -123,8 +123,15 @@ void Server::loadPlugins()
         QPluginLoader * l = new QPluginLoader(pluginsDir_.absoluteFilePath(fileName));
         l->load();
         if (l->isLoaded()) {
-            pluginFileNames_ += fileName;
-            p_[fileName] = l;
+            QString pluginName(fileName);
+            QRegExp rx("^.*lib_([^.]*).*$", Qt::CaseInsensitive);
+
+            if (rx.exactMatch(fileName)) {
+                qDebug() << rx.cap(1);
+                pluginName = rx.cap(1);
+            }
+
+            p_[pluginName] = l;
         }
     }
 

@@ -41,7 +41,6 @@ class Server : public QObject
         QTimer timer_;
 
         QDir pluginsDir_;
-        QStringList pluginFileNames_;
         QMap<QString, MyInterface *> plugins_;
         QMap<QString, QPluginLoader *> p_;
 };

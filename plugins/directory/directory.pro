@@ -11,6 +11,6 @@ CONFIG       += plugin
 INCLUDEPATH  += ../..
 HEADERS       = filter.h
 SOURCES       = filter.cpp
-TARGET        = $$qtLibraryTarget(pnp_directoryFilter)
+TARGET        = $$qtLibraryTarget(_directoryFilter)
 
 sources.files = $$SOURCES $$HEADERS directory.pro
