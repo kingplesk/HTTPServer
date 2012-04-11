@@ -2,10 +2,12 @@ Description:
 ---
 - Learning project: Try to build a HTTPServer with C++/Qt
 
+
 Content:
 ---
 - Qt/Event-Driven HTTPServer without Threading
 - JSON communication
+
 
 lighttpd config
 ---
@@ -19,6 +21,11 @@ proxy.server  = ( "test" => (
                        ( "host" => "127.0.0.1",
                          "port" => 8888 ))
                 )
+
+
+Compile:
+---
+qmake server.pro && make
 
 
 Contact:

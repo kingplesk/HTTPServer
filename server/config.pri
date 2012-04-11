@@ -16,10 +16,10 @@ CONFIG(debug, debug|release)|CONFIG(DebugBuild) {
 }
 
 #$$(PWD)
-ERI_BIN = /home/eri/Qt
+HOME_BIN = /home/eri/Qt
 
-LIB_DIR      = $${ERI_BIN}/libs/$${DEBUG_OR_RELEASE}
-BIN_DIR      = $${ERI_BIN}/bin/$${DEBUG_OR_RELEASE}
+LIB_DIR      = $${HOME_BIN}/libs/$${DEBUG_OR_RELEASE}
+BIN_DIR      = $${HOME_BIN}/bin/$${DEBUG_OR_RELEASE}
 OBJECTS_DIR  = build/$${DEBUG_OR_RELEASE}
 MOC_DIR      = build/gen/moc
 UI_DIR       = build/gen/ui
