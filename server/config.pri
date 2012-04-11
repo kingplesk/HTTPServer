@@ -17,6 +17,7 @@ CONFIG(debug, debug|release)|CONFIG(DebugBuild) {
 
 #$$(PWD)
 HOME_BIN = /home/eri/Qt
+HOME_BUILD = /home/eri/Qt/server-build
 
 LIB_DIR      = $${HOME_BIN}/libs/$${DEBUG_OR_RELEASE}
 BIN_DIR      = $${HOME_BIN}/bin/$${DEBUG_OR_RELEASE}
