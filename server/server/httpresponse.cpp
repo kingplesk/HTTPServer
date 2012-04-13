@@ -8,7 +8,9 @@ HttpResponse::HttpResponse(QObject * parent) :
 {
     header_.setStatusLine(200, "OK", 1, 1);
     header_.addValue("Connection", "close");
-    header_.setContentType("text/html");
+    header_.addValue("Pragma", "no-cache");
+    header_.addValue("Cache-Control", "no-cache, max-age=0, must-revalidate, max-age=86400, public");
+    header_.setContentType("application/json");
 }
 
 
@@ -45,13 +47,6 @@ QByteArray HttpResponse::getResponse()
 
 
 /*
-    QByteArray header("HTTP/1.1 200 OK\r\n"
-                      "Connection: close\r\n"
-                      "Set-Cookie: sid=1;\r\n"
-                      "Content-Type: text/html\r\n\r\n");
-
-
-
 void HttpResponse::newResponse(QHttpRequestHeader header, QByteArray body)
 {
     qDebug() << "newResponse:";

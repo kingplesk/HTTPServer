@@ -7,12 +7,14 @@ Http::Http(QTcpSocket * socket, QObject * parent) :
     socket_(socket),
     request_(0),
     response_(0),
-    parser_(0)
+    parser_(0),
+    state_(QAbstractSocket::ConnectedState)
 {
-    connect(socket_, SIGNAL(disconnected()), socket_, SLOT(deleteLater()));
+    //connect(socket_, SIGNAL(disconnected()), this, SLOT(deleteLater()));
     connect(socket_, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
     connect(socket_, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socketStateChanged(QAbstractSocket::SocketState)));
 
+    socket_->setParent(this);
     parser_ = new HttpParser(this);
 }
 
@@ -37,24 +39,32 @@ void Http::socketError(QAbstractSocket::SocketError socketError)
     qDebug() << "socketErrror:" << socketError;
 }
 
+QAbstractSocket::SocketState Http::state()
+{
+    return state_;
+}
+
 void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 {
-    qDebug() << "socketState:" << socketState;
+    if (socket_->state() != QAbstractSocket::ConnectedState &&
+        socket_->state() != QAbstractSocket::ClosingState) {
+
+        state_ = QAbstractSocket::ClosingState;
+
+        qDebug() << "stateChanged:" << state_;
+
+        deleteLater();
+    }
 }
 
 void Http::closeComet()
 {
-    sendReply(QByteArray("Reply Comet: "));
+    sendReply(QByteArray(""));
 }
 
 void Http::sendReply(QByteArray body)
 {
-/*
-    QByteArray header("HTTP/1.1 200 OK\r\n"
-                      "Connection: close\r\n"
-                      "Set-Cookie: sid=1;\r\n"
-                      "Content-Type: text/html\r\n\r\n");
-*/
+    state_ = QAbstractSocket::ClosingState;
     socket_->write(response_->getResponse().append(body));
     socket_->close();
 }

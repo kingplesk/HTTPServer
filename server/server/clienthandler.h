@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QVector>
+#include <QMutableVectorIterator>
 #include <QByteArray>
 #include <QPluginLoader>
 

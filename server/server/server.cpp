@@ -17,7 +17,7 @@ Server::Server(QObject * parent) :
     i_ = 0;
 
     connect(&timer_, SIGNAL(timeout()), this, SLOT(update()));
-    timer_.start(30 * 1000);
+    timer_.start(40 * 1000);
 
     loadPlugins();
 }
@@ -75,7 +75,7 @@ void Server::handle()
         ch->newComet(http, p_);
     }
 
-    qDebug() << "is Ajax" << http->request_->isAjax();
+    //qDebug() << "is Ajax" << http->request_->isAjax();
 
     if (http->request_->isAjax()) {
         ch->newRequest(http, p_);
@@ -86,7 +86,7 @@ void Server::handle()
 
 void Server::update()
 {
-    broadcast("huhu");
+    broadcast("[0,{\"data\":\"huhu\"}]");
 }
 
 void Server::broadcast(QString json)

@@ -11,9 +11,17 @@ ClientHandler::ClientHandler(QObject * parent) :
 
 void ClientHandler::sendComet(QString json)
 {
-    QVectorIterator<Http *> i(comets_);
+    QMutableVectorIterator<Http *> i(comets_);
     while (i.hasNext()) {
-        i.next()->sendReply(QByteArray().append(json));
+        Http * next = i.next();
+        QAbstractSocket::SocketState state = next->state();
+        qDebug() << "TEST -----" << state;
+        if (state == QAbstractSocket::ConnectedState) {
+            next->sendReply(QByteArray().append(json));
+        }
+        else {
+            i.remove();
+        }
     }
 }
 
@@ -29,13 +37,20 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
 
 void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 {
-    requests_.append(http);
+    //requests_.append(http);
+    QString reply("");
+    if (p.contains("directoryFilter")) {
+        MyInterface *mi = createPluginInstance("directoryFilter", p);
 
-    MyInterface *mi = createPluginInstance("directoryFilter", p);
+        qDebug() << "newRequest";
 
-    qDebug() << "newRequest";
+        reply.append("[0, {\"data\":\"" + mi->getString() + "\"}]");
+    }
+    else {
+        reply.append("[1, {\"data\":\"nono-plugin\"}]");
+    }
 
-    http->sendReply(QByteArray("Reply Ajax: ").append(mi->getString()));
+    http->sendReply(QByteArray().append(reply));
 }
 
 MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p)

@@ -16,6 +16,7 @@ class Http : public QObject
         Http(QTcpSocket * socket, QObject * parent = 0);
         void sendReply(QByteArray body);
         void parse();
+        QAbstractSocket::SocketState state();
 
         HttpRequest * request_;
         HttpResponse * response_;
@@ -32,6 +33,7 @@ class Http : public QObject
     private:
         QTcpSocket * socket_;
         HttpParser * parser_;
+        QAbstractSocket::SocketState state_;
 };
 
 #endif // HTTP_H
