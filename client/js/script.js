@@ -8,6 +8,7 @@ var Util = (function() {
             return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
         }
     };
+
 })();
 
 var Ajax = (function() {
@@ -54,9 +55,44 @@ var Ajax = (function() {
             send(url, method, callback, postVars);
         }
     };
+
 })()
 
-var Comet = (function(Ajax, Util) {
+var Signal = function() {
+    this.slots = {};
+    this.add = function(slot, context) {
+        context = context || null;
+        var contextId = context + "", slotId = slot + "";
+
+        if (!this.slots[contextId]) {
+            var newSlots = {};
+            newSlots[slotId] = {"slot": slot, "context": context};
+            this.slots[contextId] = newSlots;
+        }
+        else {
+            this.slots[contextId][slotId] = {"slot": slot, "context": context};
+        }
+    };
+};
+
+Signal.prototype = {
+    connect : function(slot, context) {
+        this.add(slot, context);
+    },
+    disconnect: function(context, slot) {
+
+    },
+    emit : function(data) {
+        for (var i in this.slots) {
+            for (var j in this.slots[i]) {
+                this.slots[i][j].slot.call(this.slots[i][j].context, data);
+            }
+        }
+    }
+};
+
+var Comet = (function(Ajax, Util, Signal) {
+    var instance;
     var isStarted = false;
     var newComet = function(sleep) {
         sleep = sleep || 0;
@@ -68,6 +104,8 @@ var Comet = (function(Ajax, Util) {
     var callback = {
         success: function(responseText) {
             console.log('Comet Success: ' + responseText);
+
+            //instance["test" + id] && instance["test" + id].emit("test" + id);
 
             newComet();
         },
@@ -81,12 +119,43 @@ var Comet = (function(Ajax, Util) {
         newComet();
     };
 
-    return {
-        start: start
-    };
-})(Ajax, Util);
+    // BEGIN: TestTimer for Signal implmentation
+    var timer = function() {
+        setTimeout(function() {
+            var id = parseInt((Math.random() * 7), 10);
+            instance["test" + id] && instance["test" + id].emit("test" + id);
 
-var Notify = (function(Util) {
+            timer();
+        }, 5000);
+    };
+
+    timer();
+    // END: TestTimer
+
+    Comet = function Comet() {
+        if (instance) {
+            return instance;
+        }
+
+        instance = this;
+
+        this.start = start;
+
+        this.test0 = new Signal();
+        this.test1 = new Signal();
+        this.test2 = new Signal();
+        this.test3 = new Signal();
+        this.test4 = new Signal();
+        this.test5 = new Signal();
+        this.test6 = new Signal();
+        this.test7 = new Signal();
+    };
+
+    return new Comet();
+
+})(Ajax, Util, Signal);
+
+var Notify = (function(Util, Comet) {
     var timer = null, timeout = 5000;
     var show = function(notifier) {
         next(timeout);
@@ -98,7 +167,13 @@ var Notify = (function(Util) {
         }, timeout);
     };
 
-    return {
+    Comet.test0.connect(console.log);
+    Comet.test1.connect(console.log);
+    Comet.test2.connect(console.log);
+    Comet.test3.connect(console.log);
+    Comet.test4.connect(console.log);
+    Comet.test5.connect(console.log);
+    Comet.test5.connect(console.info);
+    Comet.test6.connect(console.log);
 
-    };
-})(Util);
+})(Util, Comet);
