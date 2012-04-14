@@ -1,6 +1,6 @@
 # Build Directories #
 #####################
-build/**/*
+build/*
 
 # Compiled source #
 ###################

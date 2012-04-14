@@ -93,12 +93,14 @@ void Server::broadcast(QString json)
 {
     qDebug() << json;
 
+    qint64 ii = 0;
+
     QMutableMapIterator<QString, ClientHandler *> i(clients_);
     while (i.hasNext()) {
         i.next();
         i.value()->sendComet(json);
 
-        qDebug() << i.key() << ": " << i.value();
+        //qDebug() << (++ii) << i.key() << ": " << i.value();
     }
 }
 
