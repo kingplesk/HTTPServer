@@ -3,6 +3,9 @@ var Util = (function() {
     return {
         "$id": function(id) {
             return document.getElementById(id);
+        },
+        "getUniqueId" : function() {
+            return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
         }
     };
 })();
@@ -53,12 +56,13 @@ var Ajax = (function() {
     };
 })()
 
-var Comet = (function() {
-
-    var newComet = function() {
+var Comet = (function(Ajax, Util) {
+    var isStarted = false;
+    var newComet = function(sleep) {
+        sleep = sleep || 0;
         setTimeout(function() {
-            Ajax.send("http://test.localhost.lan:88/test?notify=" + getId(), callback);
-        }, 0);
+            Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId(), callback);
+        }, sleep);
     };
 
     var callback = {
@@ -67,18 +71,34 @@ var Comet = (function() {
 
             newComet();
         },
-        error: function(statusCode) { console.log('Failure: ' + statusCode); }
-    }
+        error: function(statusCode) { console.log('Error: ' + statusCode); }
+    };
 
-    var getId = function() {
-        return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
-    }
 
     var start = function(url) {
+        if (isStarted) return;
+        isStarted = true;
         newComet();
-    }
+    };
 
     return {
         start: start
     };
-})();
+})(Ajax, Util);
+
+var Notify = (function(Util) {
+    var timer = null, timeout = 5000;
+    var show = function(notifier) {
+        next(timeout);
+    };
+
+    var next = function() {
+        timer = setTimeout(function() {
+            //hide content
+        }, timeout);
+    };
+
+    return {
+
+    };
+})(Util);
