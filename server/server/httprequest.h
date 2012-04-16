@@ -14,6 +14,7 @@ class HttpRequest : public QObject
         bool isComet();
         bool isAjax();
         QString getCookie(const QString & name);
+        QString getBody();
 
     private:
         QHttpRequestHeader header_;

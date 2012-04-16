@@ -31,3 +31,8 @@ QString HttpRequest::getCookie(const QString & name)
 
     return QString();
 }
+
+QString HttpRequest::getBody()
+{
+    return body_;
+}

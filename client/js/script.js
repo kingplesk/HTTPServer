@@ -1,5 +1,6 @@
 
 var Util = (function() {
+
     return {
         "$id": function(id) {
             return document.getElementById(id);
@@ -15,6 +16,22 @@ var Util = (function() {
         },
         "html": function(e, content) {
             e.innerHTML = content;
+        },
+        "connect": function(event, e, callback) {
+            if (e.addEventListener){
+                e.addEventListener(event, callback, false);
+            }
+            else if (obj.attachEvent){
+                e.attachEvent("on" + event, callback);
+            }
+        },
+        "disconnect": function(event, e, callback) {
+            if (e.removeEventListener) {
+                e.removeEventListener (event, callback, false);
+            }
+            else if (e.detachEvent) {
+                e.detachEvent ("on" + event, callback);
+            }
         }
     };
 
@@ -209,6 +226,10 @@ var TrayIcon = (function(Util, Comet) {
         hide();
     }
 
+    Util.connect("click", domClose, function(e) {
+        hide();
+    });
+
     TrayIcon = function TrayIcon() {
         if (instance) {
             return instance;
@@ -223,22 +244,36 @@ var TrayIcon = (function(Util, Comet) {
 
 })(Util, Comet);
 
+var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
+    var trayIconContent = function(data) {
+        var content = '<div style="background-color:red; height: 100%; font-weight:bold;">PluginTest0 - ' + data + '</div>';
+        TrayIcon.show(content);
+    };
+
+    Comet.test0.connect(trayIconContent);
+    Comet.test0.connect(console.log);
+
+    //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
+
+})(Comet, TrayIcon);
 
 
-Comet.test0.connect(TrayIcon.show);
-Comet.test0.connect(console.log);
+//
 Comet.test1.connect(console.log);
 Comet.test1.connect(TrayIcon.show);
+//
 Comet.test2.connect(console.log);
 Comet.test2.connect(TrayIcon.show);
+//
 Comet.test3.connect(console.log);
 Comet.test3.connect(TrayIcon.show);
+//
 Comet.test4.connect(console.log);
 Comet.test4.connect(TrayIcon.show);
+//
 Comet.test5.connect(console.log);
 Comet.test5.connect(console.info);
 Comet.test5.connect(TrayIcon.show);
-Comet.test6.connect(console.log);
-Comet.test6.connect(TrayIcon.show);
-
-
+//
+//Comet.test6.connect(console.log);
+//Comet.test6.connect(TrayIcon.show);

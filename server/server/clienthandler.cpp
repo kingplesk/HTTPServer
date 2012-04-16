@@ -1,4 +1,9 @@
 
+#include <QUrl>
+#include <QScriptValue>
+#include <QScriptEngine>
+#include <QScriptValueIterator>
+
 #include "clienthandler.h"
 
 ClientHandler::ClientHandler(QObject * parent) :
@@ -38,16 +43,62 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
 void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 {
     //requests_.append(http);
+
+    QByteArray byteArray = QByteArray().append(http->request_->getBody());
+    QString json = QUrl::fromEncoded(byteArray).toString();
+    qDebug() << json;
+
+    QScriptEngine engine;
+    QScriptValue sc = engine.evaluate("(" + QString(json) + ")");
+
+    qDebug() << sc.toString();
+
+    QString handler;
+
+    /*
+    bool	isArray () const
+    bool	isBool () const
+    bool	isDate () const
+    bool	isError () const
+    bool	isFunction () const
+    bool	isNull () const
+    bool	isNumber () const
+    bool	isObject () const
+    bool	isUndefined () const
+    bool	isString () const
+
+    bool	toBool () const
+    QDateTime	toDateTime () const
+    qint32	toInt32 () const
+    qsreal	toInteger () const
+    qsreal	toNumber () const
+    QRegExp	toRegExp () const
+    QString	toString () const
+    quint16	toUInt16 () const
+    quint32	toUInt32 () const
+    */
+
+    QScriptValueIterator it(sc);
+    while (it.hasNext()) {
+        it.next();
+
+        if (it.name() == "handler") {
+            handler = it.value().toString();
+        }
+
+        qDebug() << it.name() << ": " << it.value().toString();
+    }
+
     QString reply("");
-    if (p.contains("directoryFilter")) {
-        MyInterface *mi = createPluginInstance("directoryFilter", p);
+    if (p.contains(handler)) {
+        MyInterface *mi = createPluginInstance(handler, p);
 
         qDebug() << "newRequest";
 
-        reply.append("[0, {\"data\":\"" + mi->getString() + "\"}]");
+        reply.append("[0, {\"handler\":\"" + mi->getString() + "\"}]");
     }
     else {
-        reply.append("[1, {\"data\":\"nono-plugin\"}]");
+        reply.append("[1, {\"handler\":\"nono-plugin\"}]");
     }
 
     http->sendReply(QByteArray().append(reply));
