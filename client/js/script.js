@@ -5,6 +5,10 @@ var Util = (function() {
         "$id": function(id) {
             return document.getElementById(id);
         },
+        "$tag": function(tag, context) {
+            context = context || document;
+            return context.getElementsByTagName(tag);
+        },
         "getUniqueId" : function() {
             return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
         },
@@ -221,13 +225,9 @@ var TrayIcon = (function(Util, Comet) {
         reset();
     }
 
-    var close = function(e) {
-        e.preventDefault;
-        hide();
-    }
-
     Util.connect("click", domClose, function(e) {
-        hide();
+         e.preventDefault;
+         hide();
     });
 
     TrayIcon = function TrayIcon() {
@@ -243,6 +243,119 @@ var TrayIcon = (function(Util, Comet) {
     return new TrayIcon();
 
 })(Util, Comet);
+
+var Selector = (function(Util, Signal) {
+    var selecting = false, start = {x: null, y: null}, current = {x: null, y: null, w: null, h: null, t: null, l:null},
+        doc = document, domRectangle, rectangleId = "selector-rectangle-" + Util.getUniqueId().replace(/\./g, "-"),
+        signal = new Signal();
+
+    var reset = function() {
+        selecting = false;
+
+        if (domRectangle) {
+            Util.hide(domRectangle);
+        }
+        else {
+            domRectangle = document.createElement("div");
+
+            domRectangle.id = rectangleId;
+            domRectangle.style.position = "absolute";
+            domRectangle.style.border = "1px solid black";
+            domRectangle.style.display = "none";
+            domRectangle.style.width = "1px";
+            domRectangle.style.height = "1px";
+
+            Util.$tag("body")[0].appendChild(domRectangle);
+        }
+    };
+
+    var onMouseMove = function(e) {
+        e.preventDefault();
+
+        current.x = document.all ? window.event.clientX : e.pageX;
+        current.y = document.all ? window.event.clientY : e.pageY;
+
+        if (selecting) {
+            selectedArea();
+            signal.emit();
+        }
+    };
+
+    var onMouseDown = function(e) {
+        e.preventDefault();
+
+        selecting = true;
+
+        start.x = current.x;
+        start.y = current.y;
+
+        selectedArea();
+
+        Util.show(domRectangle);
+    }
+
+    var onMouseUp = function(e) {
+        e.preventDefault();
+        reset();
+    }
+
+    var selectedArea = function() {
+        if ((current.x - start.x) < 0) {
+            current.l = current.x;
+            current.w = -1 * (current.x - start.x);
+        }
+        else {
+            current.l = start.x;
+            current.w = current.x - start.x;
+        }
+
+        if ((current.y - start.y) < 0) {
+            current.t = current.y;
+            current.h = -1 * (current.y - start.y);
+        }
+        else {
+            current.t = start.y;
+            current.h = current.y - start.y;
+        }
+
+        drawRectangle(current.t, current.l, current.w, current.h);
+    };
+
+    var drawRectangle = function(t, l, w, h) {
+        domRectangle.style.top    = t + "px";
+        domRectangle.style.left   = l + "px";
+        domRectangle.style.width  = w + "px";
+        domRectangle.style.height = h + "px";
+    }
+
+    reset();
+
+    Util.connect("mousedown", doc, onMouseDown);
+    Util.connect("mousemove", doc, onMouseMove);
+    Util.connect("mouseup", doc, onMouseUp);
+
+    Selector = function Selector(doc, callbacks) {
+        var selectables = [], selectableClass = "selectable", childNodes = doc.childNodes,
+            childNode, nullFunction = function(){ console.log("onSelect", arguments) };
+
+        signal.connect((callbacks && callbacks.onSelect) || nullFunction);
+
+        for (var i = 0, ilen = childNodes.length; i < ilen; i++) {
+            childNode = childNodes[i];
+            if (childNode.nodeType == 1 && childNode.className == selectableClass) {
+                selectables.push(childNode);
+            }
+        }
+
+        console.log(selectables);
+    };
+
+    return Selector;
+})(Util, Signal);
+
+var test = new Selector(Util.$id("selectRoot"));
+
+
 
 var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
     var trayIconContent = function(data) {
