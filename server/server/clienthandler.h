@@ -10,6 +10,7 @@
 #include <QPluginLoader>
 
 #include "http.h"
+#include "test.h"
 #include "myinterface.h"
 
 class ClientHandler : public QObject
@@ -33,6 +34,8 @@ class ClientHandler : public QObject
         QTimer * timer_;
         QVector<Http *> comets_;
         QVector<Http *> requests_;
+        Test * test_;
+        void * newValue_;
 
 };
 

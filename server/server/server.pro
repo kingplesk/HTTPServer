@@ -19,6 +19,16 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
+#---
+# Qjson
+#---
+QJSON_LIB = $${HOME_BIN}/qjson/lib
+system('cp $${QJSON_LIB}/libqjson.so* $${LIB_DIR}/')
+
+LIBS += -L"$${LIB_DIR}" -l"qjson"
+INCLUDEPATH += "../../../qjson/include"
+#---
+
 SOURCES += main.cpp \
     server.cpp \
     httprequest.cpp \
@@ -29,7 +39,8 @@ SOURCES += main.cpp \
     test.cpp \
     #comet.cpp \
     http.cpp \
-    requesthandler.cpp
+    requesthandler.cpp \
+    json.cpp
 
 HEADERS += \
     server.h \
@@ -43,7 +54,8 @@ HEADERS += \
     #comet.h \
     http.h \
     #http_p.h
-    requesthandler.h
+    requesthandler.h \
+    json.h
 
 OTHER_FILES += \
     qt.conf

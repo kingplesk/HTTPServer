@@ -9,6 +9,20 @@ var Util = (function() {
             context = context || document;
             return context.getElementsByTagName(tag);
         },
+        "getOffset": function(e) {
+            var offset = {t: 0, l: 0};
+
+            while (e) {
+                if (e.offsetTop !== undefined)
+                  offset.t  += parseInt(e.offsetTop);
+                if (e.offsetLeft !== undefined)
+                  offset.l += parseInt(e.offsetLeft);
+
+                e = e.parentOffset;
+            }
+
+            return offset;
+        },
         "getUniqueId" : function() {
             return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
         },
@@ -121,10 +135,11 @@ var Signal = function() {
         }
     };
 
-    this.emit = function(data) {
+    this.emit = function() {
+        var args = Array.prototype.slice.call(arguments);
         for (var i in slots) {
             for (var j in slots[i]) {
-                slots[i][j].slot.call(slots[i][j].context, data);
+                slots[i][j].slot.apply(slots[i][j].context, args);
             }
         }
     };
@@ -162,7 +177,7 @@ var Comet = (function(Ajax, Util, Signal) {
     var timer = function() {
         // 3 - 7 sec.
         var timeout = (parseInt((Math.random() * 5), 10) + 3) * 1000;
-        console.log("Timeout:", timeout);
+        //console.log("Timeout:", timeout);
 
         setTimeout(function() {
             var id = parseInt((Math.random() * 7), 10);
@@ -247,7 +262,7 @@ var TrayIcon = (function(Util, Comet) {
 var Selector = (function(Util, Signal) {
     var selecting = false, start = {x: null, y: null}, current = {x: null, y: null, w: null, h: null, t: null, l:null},
         doc = document, domRectangle, rectangleId = "selector-rectangle-" + Util.getUniqueId().replace(/\./g, "-"),
-        signal = new Signal();
+        signal = { checkIsSelected: new Signal() };
 
     var reset = function() {
         selecting = false;
@@ -277,7 +292,6 @@ var Selector = (function(Util, Signal) {
 
         if (selecting) {
             selectedArea();
-            signal.emit();
         }
     };
 
@@ -319,6 +333,7 @@ var Selector = (function(Util, Signal) {
         }
 
         drawRectangle(current.t, current.l, current.w, current.h);
+        signal.checkIsSelected.emit(current.t, current.l, current.w, current.h);
     };
 
     var drawRectangle = function(t, l, w, h) {
@@ -334,12 +349,16 @@ var Selector = (function(Util, Signal) {
     Util.connect("mousemove", doc, onMouseMove);
     Util.connect("mouseup", doc, onMouseUp);
 
-    Selector = function Selector(doc, callbacks) {
-        var selectables = [], selectableClass = "selectable", childNodes = doc.childNodes,
-            childNode, nullFunction = function(){ console.log("onSelect", arguments) };
+    Selector = function Selector(el, callbacks) {
+        var selectables = [], selectableClass = "selectable", selectedClass = "state-selected", childNodes = el.childNodes,
+            childNode, nullFunction = function(selected){ console.log("selected", selected) };
 
-        signal.connect((callbacks && callbacks.onSelect) || nullFunction);
+        //add external callbacks
+        callbacks = callbacks || { onSelected: nullFunction, onSelectedItem: nullFunction};
+        callbacks.onSelected = callbacks.onSelected || nullFunction;
+        callbacks.onSelectedItem = callbacks.onSelectItem || nullFunction;
 
+        //collect selectable elements on first layer
         for (var i = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
             if (childNode.nodeType == 1 && childNode.className == selectableClass) {
@@ -347,7 +366,26 @@ var Selector = (function(Util, Signal) {
             }
         }
 
-        console.log(selectables);
+        signal.checkIsSelected.connect(function(t, l, w, h) {
+            var selectable = null, selected = [], offset;
+
+            for (var i = 0, ilen = selectables.length; i < ilen; i++) {
+                selectable = selectables[i];
+                offset = Util.getOffset(selectable);
+
+                if ( !(t <= offset.t + selectable.offsetHeight ) ) continue;
+                if ( !(t+h >= offset.t) ) continue;
+                if ( !(l <= offset.l + selectable.offsetWidth) ) continue;
+                if ( !(l+w >= offset.l) ) continue;
+
+                selected.push(selectable);
+                callbacks.onSelectedItem(selectable);
+            }
+
+            if (selected.length > 0) {
+                callbacks.onSelected(selected);
+            };
+        });
     };
 
     return Selector;
@@ -364,7 +402,7 @@ var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
     };
 
     Comet.test0.connect(trayIconContent);
-    Comet.test0.connect(console.log);
+    //Comet.test0.connect(console.log);
 
     //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
 
@@ -372,20 +410,20 @@ var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
 
 
 //
-Comet.test1.connect(console.log);
+//Comet.test1.connect(console.log);
 Comet.test1.connect(TrayIcon.show);
 //
-Comet.test2.connect(console.log);
+//Comet.test2.connect(console.log);
 Comet.test2.connect(TrayIcon.show);
 //
-Comet.test3.connect(console.log);
+//Comet.test3.connect(console.log);
 Comet.test3.connect(TrayIcon.show);
 //
-Comet.test4.connect(console.log);
+//Comet.test4.connect(console.log);
 Comet.test4.connect(TrayIcon.show);
 //
-Comet.test5.connect(console.log);
-Comet.test5.connect(console.info);
+//Comet.test5.connect(console.log);
+//Comet.test5.connect(console.info);
 Comet.test5.connect(TrayIcon.show);
 //
 //Comet.test6.connect(console.log);
