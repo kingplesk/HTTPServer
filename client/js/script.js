@@ -9,16 +9,16 @@ var Util = (function() {
             context = context || document;
             return context.getElementsByTagName(tag);
         },
-        "getOffset": function(e) {
+        "getOffset": function(el) {
             var offset = {t: 0, l: 0};
 
-            while (e) {
-                if (e.offsetTop !== undefined)
-                  offset.t  += parseInt(e.offsetTop);
-                if (e.offsetLeft !== undefined)
-                  offset.l += parseInt(e.offsetLeft);
+            while (el) {
+                if (el.offsetTop !== undefined)
+                  offset.t  += parseInt(el.offsetTop);
+                if (el.offsetLeft !== undefined)
+                  offset.l += parseInt(el.offsetLeft);
 
-                e = e.parentOffset;
+                el = el.parentOffset;
             }
 
             return offset;
@@ -26,14 +26,41 @@ var Util = (function() {
         "getUniqueId" : function() {
             return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
         },
-        "hide": function(e) {
-            e.style.display = "none";
+        "hide": function(el) {
+            el.style.display = "none";
         },
-        "show": function(e) {
-            e.style.display = "";
+        "show": function(el) {
+            el.style.display = "";
         },
-        "html": function(e, content) {
-            e.innerHTML = content;
+        "html": function(el, content) {
+            el.innerHTML = content;
+        },
+        "hasClass": function(el, className) {
+            return (" " + el.className + " ").indexOf(" " + className + " ") !== -1;
+
+        },
+        "addClass": function(el, className) {
+            if (this.hasClass(el, className)) {
+                return;
+            }
+
+            el.className += " " + className
+        },
+        "removeClass": function(el, className) {
+            if (!this.hasClass(el, className)) {
+                return;
+            }
+
+            var splitted = (" " + el.className + " ").split(" " + className + " ");
+            el.className = splitted.join(" ");
+        },
+        "toggleClass": function(el, className, force) {
+            if (force) {
+                this.addClass(el, className);
+            }
+            else {
+                this.removeClass(el, className);
+            }
         },
         "connect": function(event, e, callback) {
             if (e.addEventListener){
@@ -43,12 +70,12 @@ var Util = (function() {
                 e.attachEvent("on" + event, callback);
             }
         },
-        "disconnect": function(event, e, callback) {
-            if (e.removeEventListener) {
-                e.removeEventListener (event, callback, false);
+        "disconnect": function(event, el, callback) {
+            if (el.removeEventListener) {
+                el.removeEventListener (event, callback, false);
             }
-            else if (e.detachEvent) {
-                e.detachEvent ("on" + event, callback);
+            else if (el.detachEvent) {
+                el.detachEvent ("on" + event, callback);
             }
         }
     };
@@ -261,11 +288,13 @@ var TrayIcon = (function(Util, Comet) {
 
 var Selector = (function(Util, Signal) {
     var selecting = false, start = {x: null, y: null}, current = {x: null, y: null, w: null, h: null, t: null, l:null},
-        doc = document, domRectangle, rectangleId = "selector-rectangle-" + Util.getUniqueId().replace(/\./g, "-"),
-        signal = { checkIsSelected: new Signal() };
+        el = document, domRectangle, suffix = Util.getUniqueId().replace(/\./g, "-"), rectangleId = "selector-rectangle-" + suffix,
+        prefixId = "selector-item-" + suffix + "-", signals = { checkIsSelected: new Signal(), start: new Signal(), stop: new Signal() }, snapshot = [];
 
     var reset = function() {
         selecting = false;
+        signals.stop.emit();
+        snapshot = [];
 
         if (domRectangle) {
             Util.hide(domRectangle);
@@ -298,6 +327,7 @@ var Selector = (function(Util, Signal) {
     var onMouseDown = function(e) {
         e.preventDefault();
 
+        signals.start.emit();
         selecting = true;
 
         start.x = current.x;
@@ -333,7 +363,7 @@ var Selector = (function(Util, Signal) {
         }
 
         drawRectangle(current.t, current.l, current.w, current.h);
-        signal.checkIsSelected.emit(current.t, current.l, current.w, current.h);
+        signals.checkIsSelected.emit(current.t, current.l, current.w, current.h);
     };
 
     var drawRectangle = function(t, l, w, h) {
@@ -341,17 +371,26 @@ var Selector = (function(Util, Signal) {
         domRectangle.style.left   = l + "px";
         domRectangle.style.width  = w + "px";
         domRectangle.style.height = h + "px";
-    }
+    };
+
+    var getSnapshotOfElement = function(el) {
+        return snapshot[getId(el.id)];
+    };
+
+    var getId = function(id) {
+        return id.substr(id.lastIndexOf + 1);
+    };
 
     reset();
 
-    Util.connect("mousedown", doc, onMouseDown);
-    Util.connect("mousemove", doc, onMouseMove);
-    Util.connect("mouseup", doc, onMouseUp);
+    Util.connect("mousedown", el, onMouseDown);
+    Util.connect("mousemove", el, onMouseMove);
+    Util.connect("mouseup", el, onMouseUp);
 
     Selector = function Selector(el, callbacks) {
-        var selectables = [], selectableClass = "selectable", selectedClass = "state-selected", childNodes = el.childNodes,
-            childNode, nullFunction = function(selected){ console.log("selected", selected) };
+        var selectables = [], selectableClass = "selectable", childNodes = el.childNodes,
+            childNode, nullFunction = function(selected) { /*console.log("selected", selected)*/ },
+            selectedClass = "state-selected";
 
         //add external callbacks
         callbacks = callbacks || { onSelected: nullFunction, onSelectedItem: nullFunction};
@@ -359,24 +398,28 @@ var Selector = (function(Util, Signal) {
         callbacks.onSelectedItem = callbacks.onSelectItem || nullFunction;
 
         //collect selectable elements on first layer
-        for (var i = 0, ilen = childNodes.length; i < ilen; i++) {
+        for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
             if (childNode.nodeType == 1 && childNode.className == selectableClass) {
+                childNode.id = prefixId + (j++);
                 selectables.push(childNode);
             }
         }
 
-        signal.checkIsSelected.connect(function(t, l, w, h) {
-            var selectable = null, selected = [], offset;
+        signals.checkIsSelected.connect(function(t, l, w, h) {
+            var selectable = null, selected = [], offset, snapshotEl;
 
             for (var i = 0, ilen = selectables.length; i < ilen; i++) {
                 selectable = selectables[i];
+                snapshotEl = getSnapshotOfElement(selectable);
                 offset = Util.getOffset(selectable);
 
-                if ( !(t <= offset.t + selectable.offsetHeight ) ) continue;
-                if ( !(t+h >= offset.t) ) continue;
-                if ( !(l <= offset.l + selectable.offsetWidth) ) continue;
-                if ( !(l+w >= offset.l) ) continue;
+                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+
+                Util.toggleClass(selectable, selectedClass, !snapshotEl.isSelected);
 
                 selected.push(selectable);
                 callbacks.onSelectedItem(selectable);
@@ -385,6 +428,12 @@ var Selector = (function(Util, Signal) {
             if (selected.length > 0) {
                 callbacks.onSelected(selected);
             };
+        });
+
+        signals.start.connect(function() {
+            for (var i = 0, ilen = selectables.length; i < ilen; i++) {
+                snapshot[getId(selectables[i].id)] = { el: selectables[i], isSelected: Util.hasClass(selectables[i], selectedClass)};
+            }
         });
     };
 
