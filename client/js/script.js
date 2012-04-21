@@ -1,5 +1,33 @@
+console.log("Util");
 
 var Util = (function() {
+
+    var eventWrapper = function(callback, context) {
+        context = context || null;
+
+        return function(e) {
+            var src;
+
+            e = e || window.event;
+            src = e.target || e.srcElement;
+
+            if (typeof e.stopPropagation === "function") {
+                e.stopPropagation();
+            }
+            if (typeof e.cancelBubble !== "undefined") {
+                e.cancelBubble = true;
+            }
+
+            if (typeof e.preventDefault === "function") {
+                e.preventDefault();
+            }
+            if (typeof e.returnValue !== "undefined") {
+                e.returnValue = false;
+            }
+
+            callback.apply(context, [e, src]);
+        }
+    };
 
     return {
         "$id": function(id) {
@@ -22,6 +50,31 @@ var Util = (function() {
             }
 
             return offset;
+        },
+        "scrollPosition": function() {
+            var x = 0, y = 0;
+
+            if( typeof( window.pageYOffset ) == 'number' ) {
+                //Netscape compliant
+                y = window.pageYOffset;
+                x = window.pageXOffset;
+            }
+            else if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
+                //DOM compliant
+                y = document.body.scrollTop;
+                x = document.body.scrollLeft;
+            }
+            else if (window.scrollY) {
+                x = window.scrollX;
+                y = window.scrollY;
+            }
+            else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
+                //IE6 standards compliant mode
+                y = document.documentElement.scrollTop;
+                x = document.documentElement.scrollLeft;
+            }
+
+            return { "x": x, "y": y };
         },
         "getUniqueId" : function() {
             return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
@@ -62,25 +115,31 @@ var Util = (function() {
                 this.removeClass(el, className);
             }
         },
-        "connect": function(event, e, callback) {
-            if (e.addEventListener){
-                e.addEventListener(event, callback, false);
+        "connect": function(event, el, callback, context) {
+            context = context || null;
+
+            if (el.addEventListener){
+                el.addEventListener(event, eventWrapper(callback, context), false);
             }
-            else if (obj.attachEvent){
-                e.attachEvent("on" + event, callback);
+            else if (el.attachEvent){
+                el.attachEvent("on" + event, eventWrapper(callback, context));
             }
         },
-        "disconnect": function(event, el, callback) {
+        "disconnect": function(event, el, callback, context) {
+            context = context || null;
+
             if (el.removeEventListener) {
-                el.removeEventListener (event, callback, false);
+                el.removeEventListener (event, eventWrapper(callback, context), false);
             }
             else if (el.detachEvent) {
-                el.detachEvent ("on" + event, callback);
+                el.detachEvent ("on" + event, eventWrapper(callback, context));
             }
         }
     };
 
 })();
+
+console.log("Ajax");
 
 var Ajax = (function() {
     var createXhr = function() {
@@ -129,6 +188,8 @@ var Ajax = (function() {
 
 })()
 
+console.log("Signal");
+
 var Signal = function() {
     var slots = {}
 
@@ -172,6 +233,8 @@ var Signal = function() {
     };
 
 };
+
+console.log("Comet");
 
 var Comet = (function(Ajax, Util, Signal) {
     var instance;
@@ -239,10 +302,12 @@ var Comet = (function(Ajax, Util, Signal) {
 
 })(Ajax, Util, Signal);
 
+console.log("TrayIcon");
+
 var TrayIcon = (function(Util, Comet) {
     var instance;
-    var timer = null, timeout = 5000;
-    var domContainer = Util.$id("TrayIcon"),
+    var timer = null, timeout = 5000,
+        domContainer = Util.$id("TrayIcon"),
         domClose = Util.$id("TrayIconClose"),
         domPluginContainer = Util.$id("TrayIconPluginContainer");
 
@@ -260,15 +325,14 @@ var TrayIcon = (function(Util, Comet) {
     var reset = function() {
         if (timer) clearTimeout(timer);
         timer = null;
-    }
+    };
 
     var hide = function() {
         Util.hide(domContainer);
         reset();
-    }
+    };
 
-    Util.connect("click", domClose, function(e) {
-         e.preventDefault;
+    Util.connect("mousedown", domClose, function(e) {
          hide();
     });
 
@@ -286,8 +350,10 @@ var TrayIcon = (function(Util, Comet) {
 
 })(Util, Comet);
 
+console.log("Selector")
+
 var Selector = (function(Util, Signal) {
-    var selecting = false, start = {x: null, y: null}, current = {x: null, y: null, w: null, h: null, t: null, l:null},
+    var selecting = false, start = { x: null, y: null }, current = { x: null, y: null, w: null, h: null, t: null, l:null },
         el = document, domRectangle, suffix = Util.getUniqueId().replace(/\./g, "-"), rectangleId = "selector-rectangle-" + suffix,
         prefixId = "selector-item-" + suffix + "-", signals = { checkIsSelected: new Signal(), start: new Signal(), stop: new Signal() }, snapshot = [];
 
@@ -314,10 +380,13 @@ var Selector = (function(Util, Signal) {
     };
 
     var onMouseMove = function(e) {
-        e.preventDefault();
+        var scrollPosition = { "x": 0, "y": 0 };
+        if (document.all) {
+            scrollPosition = Util.scrollPosition();
+        }
 
-        current.x = document.all ? window.event.clientX : e.pageX;
-        current.y = document.all ? window.event.clientY : e.pageY;
+        current.x = document.all ? (window.event.clientX + scrollPosition.x) : e.pageX;
+        current.y = document.all ? (window.event.clientY + scrollPosition.y) : e.pageY;
 
         if (selecting) {
             selectedArea();
@@ -325,8 +394,6 @@ var Selector = (function(Util, Signal) {
     };
 
     var onMouseDown = function(e) {
-        e.preventDefault();
-
         signals.start.emit();
         selecting = true;
 
@@ -339,7 +406,6 @@ var Selector = (function(Util, Signal) {
     }
 
     var onMouseUp = function(e) {
-        e.preventDefault();
         reset();
     }
 
