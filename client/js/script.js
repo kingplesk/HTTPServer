@@ -97,22 +97,38 @@ var Util = (function() {
                 return;
             }
 
-            el.className += " " + className
+            var whitespace = "";
+            if (el.className != "" ) {
+                whitespace = " ";
+            }
+
+            el.className += whitespace + className;
+
         },
         "removeClass": function(el, className) {
             if (!this.hasClass(el, className)) {
                 return;
             }
-
-            var splitted = (" " + el.className + " ").split(" " + className + " ");
-            el.className = splitted.join(" ");
+            //             className->    rm className->                           rm double spaces->   trim
+            el.className = (el.className).replace(new RegExp(className, "g"), " ").replace(/\s+/g, " ").replace(/^\s*(.*?)\s*$/, "$1");
+        },
+        "isArray": function(value) {
+            return Object.prototype.toString.call(value) === '[object Array]';
         },
         "toggleClass": function(el, className, force) {
-            if (force) {
-                this.addClass(el, className);
+            var tmpForce = force, classNames = className;
+            if (!this.isArray(classNames)) {
+                classNames = [className];
             }
-            else {
-                this.removeClass(el, className);
+
+            for (var i = 0, ilen = className.length; i < ilen; i++) {
+                tmpForce = force !== undefined ? force : !this.hasClass(el, classNames[i]);
+                if (tmpForce) {
+                    this.addClass(el, classNames[i]);
+                }
+                else {
+                    this.removeClass(el, classNames[i]);
+                }
             }
         },
         "connect": function(event, el, callback, context) {
@@ -332,7 +348,7 @@ var TrayIcon = (function(Util, Comet) {
         reset();
     };
 
-    Util.connect("mousedown", domClose, function(e) {
+    Util.connect("click", domClose, function(e) {
          hide();
     });
 
@@ -360,7 +376,7 @@ var Selector = (function(Util, Signal) {
     var reset = function() {
         selecting = false;
         signals.stop.emit();
-        snapshot = [];
+        //snapshot = [];
 
         if (domRectangle) {
             Util.hide(domRectangle);
@@ -440,28 +456,39 @@ var Selector = (function(Util, Signal) {
     };
 
     var getSnapshotOfElement = function(el) {
-        return snapshot[getId(el.id)];
+        return snapshot[getIdx(el.id)];
     };
 
-    var getId = function(id) {
-        return id.substr(id.lastIndexOf + 1);
+    var getIdx = function(id) {
+        return parseInt(id.substr(id.lastIndexOf("-") + 1), 10);
     };
+
+    var getStage = function() {
+        var stage = [];
+        for (var i = 0, ilen = snapshot.length; i < ilen; i++) {
+            if (snapshot[i].isStaging) {
+                stage.push(snapshot[i]);
+            }
+        }
+
+        return stage;
+    }
 
     reset();
 
-    Util.connect("mousedown", el, onMouseDown);
+    //@todo: thinking about the design, binding of mousedown should be called only once. but binding on document maybe trigger problems on events. move into constructor
+    //Util.connect("mousedown", el, onMouseDown);
     Util.connect("mousemove", el, onMouseMove);
     Util.connect("mouseup", el, onMouseUp);
 
-    Selector = function Selector(el, callbacks) {
+    Selector = function Selector(el) {
         var selectables = [], selectableClass = "selectable", childNodes = el.childNodes,
-            childNode, nullFunction = function(selected) { /*console.log("selected", selected)*/ },
-            selectedClass = "state-selected";
+            childNode, stateClasses = { selected: "state-selected", staging: "state-staging" };
 
-        //add external callbacks
-        callbacks = callbacks || { onSelected: nullFunction, onSelectedItem: nullFunction};
-        callbacks.onSelected = callbacks.onSelected || nullFunction;
-        callbacks.onSelectedItem = callbacks.onSelectItem || nullFunction;
+        this.onSelected = new Signal();
+        this.onSelectedItem = new Signal();
+
+        Util.connect("mousedown", el, onMouseDown);
 
         //collect selectable elements on first layer
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
@@ -480,25 +507,40 @@ var Selector = (function(Util, Signal) {
                 snapshotEl = getSnapshotOfElement(selectable);
                 offset = Util.getOffset(selectable);
 
-                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
-                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
-                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
-                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
+                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
+                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
+                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
 
-                Util.toggleClass(selectable, selectedClass, !snapshotEl.isSelected);
+                Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], !snapshotEl.isSelected);
 
                 selected.push(selectable);
-                callbacks.onSelectedItem(selectable);
+                this.onSelectedItem.emit(selectable);
             }
 
             if (selected.length > 0) {
-                callbacks.onSelected(selected);
+                this.onSelected.emit(selected);
             };
-        });
+        }, this);
 
         signals.start.connect(function() {
-            for (var i = 0, ilen = selectables.length; i < ilen; i++) {
-                snapshot[getId(selectables[i].id)] = { el: selectables[i], isSelected: Util.hasClass(selectables[i], selectedClass)};
+            for (var i = 0, ilen = selectables.length, idx; i < ilen; i++) {
+                idx = getIdx(selectables[i].id);
+
+                if (snapshot[idx] && snapshot[idx].isStaging) {
+                    Util.removeClass(selectables[i], stateClasses.staging);
+                }
+
+                snapshot[idx] = { idx: idx, id: selectables[i].id, el: selectables[i], isSelected: Util.hasClass(selectables[i], stateClasses.selected), isStaging: false};
+            }
+        });
+
+        signals.stop.connect(function() {
+            for (var i = 0, ilen = selectables.length, idx; i < ilen; i++) {
+                idx = getIdx(selectables[i].id);
+
+                if (!snapshot[idx]) continue;
+                snapshot[idx].isStaging =  Util.hasClass(selectables[i], stateClasses.staging);
             }
         });
     };
