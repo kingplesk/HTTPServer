@@ -490,8 +490,18 @@ var Selector = (function(Util, Signal) {
         this.onSelected = new Signal();
         this.onSelectedItem = new Signal();
 
-        this.commit = function() {
-            // implement
+        this.commit = function(callbackItem) {
+            var staging = getStage(), args, fctArgs;
+
+            if (staging.length == 0) { return; }
+
+            args = Array.prototype.slice.call(arguments);
+            args.length > 1 && args.shift();
+
+            for (var i = 0, ilen = staging.length; i < ilen; i++) {
+                callbackItem.apply(null, [staging[i].el].concat(args));
+                Util.removeClass(staging[i].el, stateClasses.staging);
+            }
         }
 
         Util.connect("mousedown", el, onMouseDown);
@@ -555,7 +565,8 @@ var Selector = (function(Util, Signal) {
     return Selector;
 })(Util, Signal);
 
-var test = new Selector(Util.$id("selectRoot"));
+var selector = new Selector(Util.$id("selectRoot"));
+
 
 
 

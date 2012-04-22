@@ -39,6 +39,14 @@
     li.state-staging { border-right: 1px solid red; border-bottom: 1px solid red; }
 </style>
 
+<fieldset>
+    <p id="selectorColor"></p>
+    <p>
+        <textarea id="color">#ff0011</textarea>
+    </p>
+    <button id="colorBtn" type="button">send</button>
+</fieldset>
+
 
 <ul id="selectRoot">
     <li class="selectable"></li><li class="selectable"></li><li class="selectable"></li><li class="selectable"></li><li class="selectable"></li>
@@ -162,6 +170,15 @@ $(Util.$id('submitBtn')).bind('click', function(e) {
     }, null, postVars);
 
 });
+
+$(Util.$id('colorBtn')).bind('click', function(e) {
+    var color = Util.$id('color').value;
+
+    selector.commit(function(el, color) {
+        el.style.backgroundColor = color;
+    }, color);
+});
+
 
 </script>
 
