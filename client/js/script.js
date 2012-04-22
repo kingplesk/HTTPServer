@@ -496,7 +496,7 @@ var Selector = (function(Util, Signal) {
             if (staging.length == 0) { return; }
 
             args = Array.prototype.slice.call(arguments);
-            args.length > 1 && args.shift();
+            if (args.length > 1) { args.shift() };
 
             for (var i = 0, ilen = staging.length; i < ilen; i++) {
                 callbackItem.apply(null, [staging[i].el].concat(args));
