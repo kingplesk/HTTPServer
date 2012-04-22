@@ -373,14 +373,15 @@ var TrayIcon = (function(Util, Comet) {
 console.log("Selector")
 
 var Selector = (function(Util, Signal) {
-    var selecting = false, start = { x: null, y: null }, current = { x: null, y: null, w: null, h: null, t: null, l:null },
-        el = document, domRectangle, suffix = Util.getUniqueId().replace(/\./g, "-"), rectangleId = "selector-rectangle-" + suffix,
-        prefixId = "selector-item-" + suffix + "-", signals = { checkIsSelected: new Signal(), start: new Signal(), stop: new Signal() }, snapshot = [];
+    var selecting = false, start = { x: null, y: null },
+        current = { x: null, y: null, w: null, h: null, t: null, l:null },
+        el = document, domRectangle, suffix = Util.getUniqueId().replace(/\./g, "-"),
+        rectangleId = "selector-rectangle-" + suffix, prefixId = "selector-item-" + suffix + "-",
+        signals = { checkIsSelected: new Signal(), start: new Signal(), stop: new Signal() };
 
     var reset = function() {
         selecting = false;
         signals.stop.emit();
-        //snapshot = [];
 
         if (domRectangle) {
             Util.hide(domRectangle);
@@ -414,7 +415,8 @@ var Selector = (function(Util, Signal) {
     };
 
     var onMouseDown = function(e) {
-        signals.start.emit();
+        signals.start.emit(!!e.ctrlKey);
+
         selecting = true;
 
         start.x = current.x;
@@ -423,11 +425,11 @@ var Selector = (function(Util, Signal) {
         selectedArea();
 
         Util.show(domRectangle);
-    }
+    };
 
     var onMouseUp = function(e) {
         reset();
-    }
+    };
 
     var selectedArea = function() {
         if ((current.x - start.x) < 0) {
@@ -459,24 +461,9 @@ var Selector = (function(Util, Signal) {
         domRectangle.style.height = h + "px";
     };
 
-    var getSnapshotOfElement = function(el) {
-        return snapshot[getIdx(el.id)];
-    };
-
     var getIdx = function(id) {
         return parseInt(id.substr(id.lastIndexOf("-") + 1), 10);
     };
-
-    var getStage = function() {
-        var stage = [];
-        for (var i = 0, ilen = snapshot.length; i < ilen; i++) {
-            if (snapshot[i].isStaging) {
-                stage.push(snapshot[i]);
-            }
-        }
-
-        return stage;
-    }
 
     reset();
 
@@ -485,13 +472,33 @@ var Selector = (function(Util, Signal) {
 
     Selector = function Selector(el) {
         var selectables = [], selectableClass = "selectable", childNodes = el.childNodes,
-            childNode, stateClasses = { selected: "state-selected", staging: "state-staging" };
+            childNode, selectedClass = "state-selected", snapshot = [], ctrlKeyPressed = false;
 
+        var getSnapshotOfElement = function(el) {
+            return snapshot[getIdx(el.id)];
+        };
+
+        var getStage = function() {
+            var stage = [];
+            for (var i = 0, ilen = selectables.length; i < ilen; i++) {
+                if (Util.hasClass(selectables[i], selectedClass)) {
+                    stage.push(selectables[i]);
+                }
+            }
+
+            return stage;
+        };
+
+        var onKeyPress = function(e) {
+            console.log("keyPress", e);
+        };
+
+        //init signals, callback and listener
         this.onSelected = new Signal();
         this.onSelectedItem = new Signal();
 
         this.commit = function(callbackItem) {
-            var staging = getStage(), args, fctArgs;
+            var staging = getStage(), args;
 
             if (staging.length == 0) { return; }
 
@@ -499,10 +506,12 @@ var Selector = (function(Util, Signal) {
             if (args.length > 1) { args.shift() };
 
             for (var i = 0, ilen = staging.length; i < ilen; i++) {
-                callbackItem.apply(null, [staging[i].el].concat(args));
-                Util.removeClass(staging[i].el, stateClasses.staging);
+                callbackItem.apply(null, [staging[i]].concat(args));
+                Util.removeClass(staging[i], selectedClass);
             }
-        }
+
+            snapshot = [];
+        };
 
         Util.connect("mousedown", el, onMouseDown);
 
@@ -523,12 +532,12 @@ var Selector = (function(Util, Signal) {
                 snapshotEl = getSnapshotOfElement(selectable);
                 offset = Util.getOffset(selectable);
 
-                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
-                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
-                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
-                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
+                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
+                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, selectedClass, snapshotEl.isSelected); continue; }
 
-                Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ !snapshotEl.isSelected, !snapshotEl.isSelected ]);
+                Util.toggleClass(selectable, selectedClass, !snapshotEl.isSelected || isCtrlKeyPressed);
 
                 selected.push(selectable);
                 this.onSelectedItem.emit(selectable);
@@ -539,31 +548,23 @@ var Selector = (function(Util, Signal) {
             };
         }, this);
 
-        signals.start.connect(function() {
+        signals.start.connect(function(isPressed) {
+            isCtrlKeyPressed = isPressed;
+
             for (var i = 0, ilen = selectables.length, idx, isStaging; i < ilen; i++) {
                 idx = getIdx(selectables[i].id);
-                isStaging = snapshot[idx] && snapshot[idx].isStaging;
-
-                if (isStaging) {
-                    Util.removeClass(selectables[i], stateClasses.staging);
-                }
-
-                snapshot[idx] = { idx: idx, id: selectables[i].id, el: selectables[i], isSelected: Util.hasClass(selectables[i], stateClasses.selected), isStaging: false};
+                snapshot[idx] = { idx: idx, id: selectables[i].id, el: selectables[i], isSelected: Util.hasClass(selectables[i], selectedClass)};
             }
         });
 
         signals.stop.connect(function() {
-            for (var i = 0, ilen = selectables.length, idx; i < ilen; i++) {
-                idx = getIdx(selectables[i].id);
-
-                if (!snapshot[idx]) { continue; }
-                snapshot[idx].isStaging =  Util.hasClass(selectables[i], stateClasses.staging);
-            }
+            snapshot = [];
         });
     };
 
     return Selector;
 })(Util, Signal);
+
 
 var selector = new Selector(Util.$id("selectRoot"));
 
