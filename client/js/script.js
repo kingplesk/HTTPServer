@@ -115,14 +115,18 @@ var Util = (function() {
         "isArray": function(value) {
             return Object.prototype.toString.call(value) === '[object Array]';
         },
-        "toggleClass": function(el, className, force) {
-            var tmpForce = force, classNames = className;
+        "toggleClass": function(el, classNames, forces) {
+            var tmpForce;
             if (!this.isArray(classNames)) {
-                classNames = [className];
+                classNames = [classNames];
+            }
+            if (!this.isArray(forces)) {
+                forces = [forces];
             }
 
-            for (var i = 0, ilen = className.length; i < ilen; i++) {
-                tmpForce = force !== undefined ? force : !this.hasClass(el, classNames[i]);
+            for (var i = 0, ilen = classNames.length; i < ilen; i++) {
+                tmpForce = forces[i] !== undefined ? forces[i] : !this.hasClass(el, classNames[i]);
+
                 if (tmpForce) {
                     this.addClass(el, classNames[i]);
                 }
@@ -476,8 +480,6 @@ var Selector = (function(Util, Signal) {
 
     reset();
 
-    //@todo: thinking about the design, binding of mousedown should be called only once. but binding on document maybe trigger problems on events. move into constructor
-    //Util.connect("mousedown", el, onMouseDown);
     Util.connect("mousemove", el, onMouseMove);
     Util.connect("mouseup", el, onMouseUp);
 
@@ -487,6 +489,10 @@ var Selector = (function(Util, Signal) {
 
         this.onSelected = new Signal();
         this.onSelectedItem = new Signal();
+
+        this.commit = function() {
+            // implement
+        }
 
         Util.connect("mousedown", el, onMouseDown);
 
@@ -507,12 +513,12 @@ var Selector = (function(Util, Signal) {
                 snapshotEl = getSnapshotOfElement(selectable);
                 offset = Util.getOffset(selectable);
 
-                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
-                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
-                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
-                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], snapshotEl.isSelected); continue; }
+                if ( !(t <= offset.t + selectable.offsetHeight ) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
+                if ( !(t+h >= offset.t) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
+                if ( !(l <= offset.l + selectable.offsetWidth) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
+                if ( !(l+w >= offset.l) ) { Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ snapshotEl.isSelected, false ]); continue; }
 
-                Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], !snapshotEl.isSelected);
+                Util.toggleClass(selectable, [ stateClasses.selected, stateClasses.staging ], [ !snapshotEl.isSelected, !snapshotEl.isSelected ]);
 
                 selected.push(selectable);
                 this.onSelectedItem.emit(selectable);
@@ -524,10 +530,11 @@ var Selector = (function(Util, Signal) {
         }, this);
 
         signals.start.connect(function() {
-            for (var i = 0, ilen = selectables.length, idx; i < ilen; i++) {
+            for (var i = 0, ilen = selectables.length, idx, isStaging; i < ilen; i++) {
                 idx = getIdx(selectables[i].id);
+                isStaging = snapshot[idx] && snapshot[idx].isStaging;
 
-                if (snapshot[idx] && snapshot[idx].isStaging) {
+                if (isStaging) {
                     Util.removeClass(selectables[i], stateClasses.staging);
                 }
 
@@ -539,7 +546,7 @@ var Selector = (function(Util, Signal) {
             for (var i = 0, ilen = selectables.length, idx; i < ilen; i++) {
                 idx = getIdx(selectables[i].id);
 
-                if (!snapshot[idx]) continue;
+                if (!snapshot[idx]) { continue; }
                 snapshot[idx].isStaging =  Util.hasClass(selectables[i], stateClasses.staging);
             }
         });
