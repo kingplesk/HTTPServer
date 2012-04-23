@@ -519,21 +519,28 @@ var Selector = (function(Util, Signal) {
         };
 
         var iterator = function(items, callbackItem) {
-            var args = Array.prototype.slice.call(arguments);
+            var args = Array.prototype.slice.call(arguments), obj = { items: [], params: [] };
 
-            if (args.length === 0) { return; }
-            if (items.length === 0) { return; }
+            if (args.length === 0) { return obj; }
+            if (items.length === 0) { return obj; }
 
             args.splice(0, 2);
 
+            obj.params = args;
+
             for (var i = 0, ilen = items.length, el; i < ilen; i++) {
                 el = Util.isNumber(items[i]) ? selectables[items[i]] : items[i];
+                idx = Util.isNumber(items[i]) ? items[i] : getIdx(items[i].id);
+
+                obj.items.push(idx);
 
                 callbackItem.apply(null, [el].concat(args));
                 Util.removeClass(items[i], selectedClass);
             }
 
             snapshot = [];
+
+            return obj;
         };
 
         //init signals, callback and listener
@@ -550,16 +557,16 @@ var Selector = (function(Util, Signal) {
          *          abstract:   { items: [N-1], params; [N-1] }
          *          example:    { items: [1,3,5,7,11,13,17], params: ['#ff00ee'] }
          *
-         *      void commit(fct [, param1 [, param2 [, paramN]]])    -> fct(el [, param1 [, param2 [, paramN]]])
-         *      void commit(object, fct)                             -> fct(el [, param1 [, param2 [, paramN]]])
-         *      object commit()                                      -> n.a.
+         *      object commit(fct [, param1 [, param2 [, paramN]]]) -> fct(el [, param1 [, param2 [, paramN]]])
+         *      object commit(object, fct)                          -> fct(el [, param1 [, param2 [, paramN]]])
+         *      object commit()                                     -> n.a.
          */
 
         function commitObject(object, callbackItem) {
             var args = object.params || [];
             args.splice(0, 0, callbackItem);
 
-            iterator.apply(null, [object.items].concat(args));
+            return iterator.apply(null, [object.items].concat(args));
         }
 
         function commitNull() {
@@ -568,7 +575,7 @@ var Selector = (function(Util, Signal) {
 
         function commit(callbackItem) {
             var staging = getStage().stage, args = Array.prototype.slice.call(arguments);
-            iterator.apply(null, [staging].concat(args));
+            return iterator.apply(null, [staging].concat(args));
         }
 
         this.commit = function(fctOrObject) {
@@ -589,7 +596,7 @@ var Selector = (function(Util, Signal) {
             var args = Array.prototype.slice.call(arguments);
             args.splice(0, 1, callbackItem);
 
-            iterator.apply(null, [selectables].concat(args));
+            return iterator.apply(null, [selectables].concat(args));
         };
 
         Util.connect("mousedown", el, onMouseDown);

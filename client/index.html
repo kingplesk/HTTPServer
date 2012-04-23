@@ -184,29 +184,33 @@ $(Util.$id('submitBtn')).bind('click', function(e) {
 //Selector test
 
 $(Util.$id('resetBtn')).bind('click', function(e) {
-    selector.reset();
+    var returnVal = selector.reset();
+    console.log(returnVal);
 });
 
 $(Util.$id('commit1Btn')).bind('click', function(e) {
-    console.log('Commit 1 ()', selector.commit());
+    var returnVal = selector.commit();
+    console.log(returnVal);
 });
 
 $(Util.$id('commit2Btn')).bind('click', function(e) {
     var color = Util.$id('color').value;
 
-    selector.commit({ items: [1,3,5,7,9,11], params: [color] }, function(el, color) {
+    var returnVal = selector.commit({ items: [1,3,5,7,9,11], params: [color] }, function(el, color) {
         el.style.backgroundColor = color;
     });
+
+    console.log(returnVal);
 });
 
 $(Util.$id('commit3Btn')).bind('click', function(e) {
     var color = Util.$id('color').value;
 
-    console.log("click");
-
-    selector.commit(function(el, color) {
+    var returnVal = selector.commit(function(el, color) {
         el.style.backgroundColor = color;
     }, color);
+
+    console.log(returnVal);
 });
 
 </script>
