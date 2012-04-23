@@ -32,20 +32,24 @@
 </fieldset>
 
 
-<style type="text/css">
-    ul { width: 400px; height: 400px; list-style: none none outside; clear: both; margin: 50px 0 0 50px; padding: 0; background-color: #ccc; border-left: 1px solid #999; border-top: 1px solid #333; }
-    li { float: left; width: 19px; height: 19px; margin: 0; padding: 0; border-right: 1px solid #999; border-bottom: 1px solid #999; }
-    li.state-selected { background-color: yellow !important; }
-</style>
-
 <fieldset>
     <p id="selectorColor"></p>
     <p>
         <textarea id="color">#ff0011</textarea>
     </p>
-    <button id="colorBtn" type="button">send</button>
+    <button id="resetBtn" type="button">reset</button>
+
+    <button id="commit1Btn" type="button">commit ()</button>
+    <button id="commit2Btn" type="button">commit (object)</button>
+    <button id="commit3Btn" type="button">commit (fct)</button>
 </fieldset>
 
+
+<style type="text/css">
+    ul { width: 400px; height: 400px; list-style: none none outside; clear: both; margin: 50px 0 0 50px; padding: 0; background-color: #ccc; border-left: 1px solid #999; border-top: 1px solid #333; }
+    li { float: left; width: 19px; height: 19px; margin: 0; padding: 0; border-right: 1px solid #999; border-bottom: 1px solid #999; }
+    li.state-selected { background-image: url(img/selected.png) !important; opacity:0.6; filter:alpha(opacity=60); }
+</style>
 
 <ul id="selectRoot">
     <li class="selectable"></li><li class="selectable"></li><li class="selectable"></li><li class="selectable"></li><li class="selectable"></li>
@@ -156,7 +160,13 @@
 
 <script type="text/javascript">
 
+
+//Comet test
+
 Comet.start();
+
+
+//Http Request test
 
 $(Util.$id('submitBtn')).bind('click', function(e) {
     var postVars = Util.$id('postVars').value;
@@ -170,7 +180,26 @@ $(Util.$id('submitBtn')).bind('click', function(e) {
 
 });
 
-$(Util.$id('colorBtn')).bind('click', function(e) {
+
+//Selector test
+
+$(Util.$id('resetBtn')).bind('click', function(e) {
+    selector.reset();
+});
+
+$(Util.$id('commit1Btn')).bind('click', function(e) {
+    console.log('Commit 1 ()', selector.commit());
+});
+
+$(Util.$id('commit2Btn')).bind('click', function(e) {
+    var color = Util.$id('color').value;
+
+    selector.commit({ items: [1,3,5,7,9,11], params: [color] }, function(el, color) {
+        el.style.backgroundColor = color;
+    });
+});
+
+$(Util.$id('commit3Btn')).bind('click', function(e) {
     var color = Util.$id('color').value;
 
     console.log("click");
@@ -179,7 +208,6 @@ $(Util.$id('colorBtn')).bind('click', function(e) {
         el.style.backgroundColor = color;
     }, color);
 });
-
 
 </script>
 

@@ -112,8 +112,32 @@ var Util = (function() {
             //             className->    rm className->                           rm double spaces->   trim
             el.className = (el.className).replace(new RegExp(className, "g"), " ").replace(/\s+/g, " ").replace(/^\s*(.*?)\s*$/, "$1");
         },
+        "is": function(value, type) {
+            return Object.prototype.toString.call(value) === '[object ' + type + ']';
+        },
         "isArray": function(value) {
-            return Object.prototype.toString.call(value) === '[object Array]';
+            return this.is(value, 'Array');
+        },
+        "isObject": function(value) {
+            return this.is(value, 'Object');
+        },
+        "isFunction": function(value) {
+            return this.is(value, 'Function');
+        },
+        "isNumber": function(value) {
+            return this.is(value, 'Number');
+        },
+        "isUndefined": function(value) {
+            return this.is(value, 'Undefined');
+        },
+        "isBoolean": function(value) {
+            return this.is(value, 'Boolean');
+        },
+        "isRegExp": function(value) {
+            return this.is(value, 'RegExp');
+        },
+        "isElement": function(value) {
+            return /^\[object HTML.*\]$/i.test(Object.prototype.toString.call(value));
         },
         "toggleClass": function(el, classNames, forces) {
             var tmpForce;
@@ -465,6 +489,10 @@ var Selector = (function(Util, Signal) {
         return parseInt(id.substr(id.lastIndexOf("-") + 1), 10);
     };
 
+    var getId = function(idx) {
+        return prefixId + idx;
+    }
+
     reset();
 
     Util.connect("mousemove", el, onMouseMove);
@@ -479,38 +507,89 @@ var Selector = (function(Util, Signal) {
         };
 
         var getStage = function() {
-            var stage = [];
+            var stage = [], ids = [];
             for (var i = 0, ilen = selectables.length; i < ilen; i++) {
                 if (Util.hasClass(selectables[i], selectedClass)) {
                     stage.push(selectables[i]);
+                    ids.push(getIdx(selectables[i].id));
                 }
             }
 
-            return stage;
+            return { stage: stage, items: ids };
         };
 
-        var onKeyPress = function(e) {
-            console.log("keyPress", e);
+        var iterator = function(items, callbackItem) {
+            var args = Array.prototype.slice.call(arguments);
+
+            if (args.length === 0) { return; }
+            if (items.length === 0) { return; }
+
+            args.splice(0, 2);
+
+            for (var i = 0, ilen = items.length, el; i < ilen; i++) {
+                el = Util.isNumber(items[i]) ? selectables[items[i]] : items[i];
+
+                callbackItem.apply(null, [el].concat(args));
+                Util.removeClass(items[i], selectedClass);
+            }
+
+            snapshot = [];
         };
 
         //init signals, callback and listener
         this.onSelected = new Signal();
         this.onSelectedItem = new Signal();
 
-        this.commit = function(callbackItem) {
-            var staging = getStage(), args;
+        /**
+         *  possible usecases for use of commit fct:
+         *      fct: item callback function
+         *          el: selected dom element
+         *          param1-N: custom parameters for fct
+         *
+         *      object: setter with items and parameters array
+         *          abstract:   { items: [N-1], params; [N-1] }
+         *          example:    { items: [1,3,5,7,11,13,17], params: ['#ff00ee'] }
+         *
+         *      void commit(fct [, param1 [, param2 [, paramN]]])    -> fct(el [, param1 [, param2 [, paramN]]])
+         *      void commit(object, fct)                             -> fct(el [, param1 [, param2 [, paramN]]])
+         *      object commit()                                      -> n.a.
+         */
 
-            if (staging.length == 0) { return; }
+        function commitObject(object, callbackItem) {
+            var args = object.params || [];
+            args.splice(0, 0, callbackItem);
 
-            args = Array.prototype.slice.call(arguments);
-            if (args.length > 1) { args.shift() };
+            iterator.apply(null, [object.items].concat(args));
+        }
 
-            for (var i = 0, ilen = staging.length; i < ilen; i++) {
-                callbackItem.apply(null, [staging[i]].concat(args));
-                Util.removeClass(staging[i], selectedClass);
+        function commitNull() {
+            return { items: getStage().items, params: [] };
+        }
+
+        function commit(callbackItem) {
+            var staging = getStage().stage, args = Array.prototype.slice.call(arguments);
+            iterator.apply(null, [staging].concat(args));
+        }
+
+        this.commit = function(fctOrObject) {
+            var args = Array.prototype.slice.call(arguments);
+
+            if (args.length === 0) {
+                return commitNull();
+            }
+            if (Util.isObject(fctOrObject)) {
+                return commitObject.apply(null, args);
             }
 
-            snapshot = [];
+            return commit.apply(null, args);
+        };
+
+        this.reset = function(callbackItem) {
+            callbackItem = callbackItem || function() {};
+            var args = Array.prototype.slice.call(arguments);
+            args.splice(0, 1, callbackItem);
+
+            iterator.apply(null, [selectables].concat(args));
         };
 
         Util.connect("mousedown", el, onMouseDown);
@@ -519,8 +598,9 @@ var Selector = (function(Util, Signal) {
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
             if (childNode.nodeType == 1 && childNode.className == selectableClass) {
-                childNode.id = prefixId + (j++);
-                selectables.push(childNode);
+                childNode.id = prefixId + j;
+                selectables[j] = childNode;
+                j++;
             }
         }
 
