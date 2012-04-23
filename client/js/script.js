@@ -112,6 +112,26 @@ var Util = (function() {
             //             className->    rm className->                           rm double spaces->   trim
             el.className = (el.className).replace(new RegExp(className, "g"), " ").replace(/\s+/g, " ").replace(/^\s*(.*?)\s*$/, "$1");
         },
+        "toggleClass": function(el, classNames, forces) {
+            var tmpForce;
+            if (!this.isArray(classNames)) {
+                classNames = [classNames];
+            }
+            if (!this.isArray(forces)) {
+                forces = [forces];
+            }
+
+            for (var i = 0, ilen = classNames.length; i < ilen; i++) {
+                tmpForce = forces[i] !== undefined ? forces[i] : !this.hasClass(el, classNames[i]);
+
+                if (tmpForce) {
+                    this.addClass(el, classNames[i]);
+                }
+                else {
+                    this.removeClass(el, classNames[i]);
+                }
+            }
+        },
         "is": function(value, type) {
             return Object.prototype.toString.call(value) === '[object ' + type + ']';
         },
@@ -138,26 +158,6 @@ var Util = (function() {
         },
         "isElement": function(value) {
             return /^\[object HTML.*\]$/i.test(Object.prototype.toString.call(value));
-        },
-        "toggleClass": function(el, classNames, forces) {
-            var tmpForce;
-            if (!this.isArray(classNames)) {
-                classNames = [classNames];
-            }
-            if (!this.isArray(forces)) {
-                forces = [forces];
-            }
-
-            for (var i = 0, ilen = classNames.length; i < ilen; i++) {
-                tmpForce = forces[i] !== undefined ? forces[i] : !this.hasClass(el, classNames[i]);
-
-                if (tmpForce) {
-                    this.addClass(el, classNames[i]);
-                }
-                else {
-                    this.removeClass(el, classNames[i]);
-                }
-            }
         },
         "connect": function(event, el, callback, context) {
             context = context || null;
