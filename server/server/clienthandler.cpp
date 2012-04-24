@@ -102,10 +102,21 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
     if (p.contains(handler)) {
         MyInterface *mi = createPluginInstance(handler, p);
 
+
+        QObject *object = dynamic_cast<QObject *>(mi);
+        //convert qvariantmap into object
+        QJson::QObjectHelper::qvariant2qobject(variantData, object);
+        //convert object to json
+        QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
+        QJson::Serializer serializer;
+        QByteArray json = serializer.serialize(newVariantMap);
+        qDebug() << "JOSN-STRING-TEST-1: " << json;
+
+
         qDebug() << "newRequest";
 
         if (handler.contains("paint")) {
-            MyInterface *mi = createPluginInstance(handler, p, variantData);
+            MyInterface *myinstance = createPluginInstance(handler, p, variantData);
             //QJson::QObjectHelper::qvariant2qobject(variantData, mi);
         }
 
@@ -140,7 +151,7 @@ MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QStri
     QByteArray json = serializer.serialize(variantMap);
 
 
-    qDebug() << "JOSN-STRING: " << json;
+    qDebug() << "JOSN-STRING-TEST-2: " << json;
 
 
     MyInterface *mi = qobject_cast<MyInterface *>(plugin);

@@ -7,7 +7,6 @@
 #include <QObject>
 
 #include "paint.h"
-#include "valueobject.h"
 #include "server/myinterface.h"
 
 class Paint : public QObject, public MyInterface
