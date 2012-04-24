@@ -7,19 +7,20 @@
 #include <QRegExp>
 #include <QDateTime>
 #include <QVariant>
+#include <QVariantMap>
 
 #include <QJson/Parser>
+#include <QJson/Serializer>
+#include <QJson/QObjectHelper>
 
 #include "clienthandler.h"
 
 ClientHandler::ClientHandler(QObject * parent) :
     QObject(parent),
     comets_(0),
-    requests_(0),
-    test_(0)
+    requests_(0)
 {
     i_ = 0;
-    test_ = new Test(this);
 }
 
 void ClientHandler::sendComet(QString json)
@@ -61,79 +62,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
     qDebug() << sc.toString();
 
-
-
-
-
-    QByteArray qjson = QByteArray().append(json);
-    QJson::Parser parser;
-    bool ok;
-    // json is a QString containing the data to convert
-    QVariant result = parser.parse (qjson, &ok);
-
-    qDebug() << result;
-
-
-
-
-
-
-
     QString handler;
-
-    /*
-    bool	toBool () const
-    QDateTime	toDateTime () const
-    qint32	toInt32 () const
-    qsreal	toInteger () const
-    qsreal	toNumber () const
-    QRegExp	toRegExp () const
-    QString	toString () const
-    quint16	toUInt16 () const
-    quint32	toUInt32 () const
-    */
-
-/*
-    const QMetaObject* metaObject = test_->metaObject();
-    QStringList properties;
-    for(int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); ++i) {
-        QString property = QString::fromLatin1(metaObject->property(i).name());
-        QScriptValue prop = sc.property(property);
-
-        properties << property;
-    }
-
-    qDebug() << " -------- PROPS: " << properties << metaObject->propertyCount();
-/*
-
-    QScriptValueIterator it(sc);
-    while (it.hasNext()) {
-        it.next();
-
-        QString name =  it.name();
-
-        if (it.value().isString()) {        QString newValue_ = it.value().toString(); }
-        else if (it.value().isNumber()) {   qsreal newValue_ = it.value().toNumber(); }
-        else if (it.value().isBool()) {     bool newValue_ = it.value().toBool(); }
-        else if (it.value().isDate()) {     QDateTime newValue_ = it.value().toDateTime(); }
-        else if (it.value().isRegExp()) {   QRegExp newValue_ = it.value().toRegExp(); }
-        //else if (it.value().isObject()) {   QObject newValue_ = it.value().toObject(); }
-        else if (it.value().isNull()) {}
-        else if (it.value().isUndefined()) {}
-        else if (it.value().isArray()) {}
-        else if (it.value().isError()){}
-        else if (it.value().isFunction()) {}
-
-        qDebug() << name << newValue_;
-
-        if (it.name() == "handler") {
-            handler = it.value().toString();
-        }
-
-        qDebug() << it.name() << ": " << it.value().toString();
-    }
-*/
-
     QScriptValueIterator its(sc);
     while (its.hasNext()) {
         its.next();
@@ -145,11 +74,40 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         qDebug() << its.name() << ": " << its.value().toString();
     }
 
+
+
+
+
+
+    QByteArray qjson = QByteArray().append(json);
+    QJson::Parser parser;
+    bool ok;
+    // json is a QString containing the data to convert
+    QVariantMap variantMap = parser.parse (qjson, &ok).toMap();
+    if (!ok) {
+        qFatal("An error occurred during parsing");
+        exit (1);
+    }
+
+    qDebug() << variantMap;
+
+    QVariantMap variantData = variantMap["data"].toMap();
+
+    qDebug() << variantData;
+
+
+
+
     QString reply("");
     if (p.contains(handler)) {
         MyInterface *mi = createPluginInstance(handler, p);
 
         qDebug() << "newRequest";
+
+        if (handler.contains("paint")) {
+            MyInterface *mi = createPluginInstance(handler, p, variantData);
+            //QJson::QObjectHelper::qvariant2qobject(variantData, mi);
+        }
 
         reply.append("[0, {\"handler\":\"" + mi->getString() + "\"}]");
     }
@@ -168,3 +126,24 @@ MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QStri
     return mi;
 }
 
+MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p, QVariantMap map)
+{
+//get the plugin instance by handlerName
+    QObject *plugin = p[pluginName]->instance();
+
+//convert qvariantmap into object
+    QJson::QObjectHelper::qvariant2qobject(map, plugin);
+
+//convert object to json
+    QVariantMap variantMap = QJson::QObjectHelper::qobject2qvariant(plugin);
+    QJson::Serializer serializer;
+    QByteArray json = serializer.serialize(variantMap);
+
+
+    qDebug() << "JOSN-STRING: " << json;
+
+
+    MyInterface *mi = qobject_cast<MyInterface *>(plugin);
+
+    return mi;
+}

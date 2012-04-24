@@ -10,7 +10,6 @@
 #include <QPluginLoader>
 
 #include "http.h"
-#include "test.h"
 #include "myinterface.h"
 
 class ClientHandler : public QObject
@@ -23,6 +22,7 @@ class ClientHandler : public QObject
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
         MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p);
+        MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p, QVariantMap map);
 
         qint16 i_;
 
@@ -34,7 +34,6 @@ class ClientHandler : public QObject
         QTimer * timer_;
         QVector<Http *> comets_;
         QVector<Http *> requests_;
-        Test * test_;
         void * newValue_;
 
 };
