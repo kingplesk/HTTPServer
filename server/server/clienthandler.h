@@ -27,6 +27,7 @@ class ClientHandler : public QObject
         qint16 i_;
 
     signals:
+        void broadcast(QString json);
 
     public slots:
 

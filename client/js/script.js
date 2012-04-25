@@ -203,13 +203,11 @@ var Ajax = (function() {
         throw new Error('Could not create an XHR object.');
     };
 
-    var send = function(url, method, callback, postVars) {
+    var send = function(url, method, callback, postVars, context) {
         var xhr = createXhr();
         if (xhr) {
             xhr.onreadystatechange = function() {
-                if(xhr.readyState !== 4) return;
-
-                var context = null;
+                if (xhr.readyState !== 4) return;
                 if (xhr.status === 200) callback.success.call(context, xhr.responseText, xhr.responseXML);
                 else callback.error.call(context, xhr.status);
             };
@@ -222,11 +220,12 @@ var Ajax = (function() {
     };
 
     return {
-        send: function(url, callback, method, postVars) {
+        send: function(url, callback, method, postVars, context) {
             method = method || 'POST';
             postVars = postVars || null;
+            context = context || null;
 
-            send(url, method, callback, postVars);
+            send(url, method, callback, postVars, context);
         }
     };
 
@@ -292,9 +291,19 @@ var Comet = (function(Ajax, Util, Signal) {
 
     var callback = {
         success: function(responseText) {
-            console.log('Comet Success: ' + responseText);
+            console.log('Comet Success Text: ', responseText);
 
-            //instance["test" + id] && instance["test" + id].emit("test" + id);
+            if (responseText && responseText !== "") {
+                var responseJson = JSON.parse(responseText);
+
+                //instance["test" + id] && instance["test" + id].emit("test" + id);
+                if (responseJson && responseJson[1].handler && responseJson[1].data &&
+                    instance.handlers && instance.handlers[responseJson[1].handler] &&
+                    instance.handlers[responseJson[1].handler].emit && Util.isFunction(instance.handlers[responseJson[1].handler].emit))
+                {
+                    instance.handlers[responseJson[1].handler].emit(responseJson[1].data);
+                }
+            }
 
             newComet();
         },
@@ -308,6 +317,7 @@ var Comet = (function(Ajax, Util, Signal) {
     };
 
     // BEGIN: TestTimer for Signal implmentation
+    /*
     var timer = function() {
         // 3 - 7 sec.
         var timeout = (parseInt((Math.random() * 5), 10) + 3) * 1000;
@@ -321,6 +331,7 @@ var Comet = (function(Ajax, Util, Signal) {
     };
 
     timer();
+    */
     // END: TestTimer
 
     Comet = function Comet() {
@@ -331,15 +342,16 @@ var Comet = (function(Ajax, Util, Signal) {
         instance = this;
 
         this.start = start;
+        this.handlers = {};
+        this.registerPlugins = function(pluginHandlers) {
+            for (var i = 0, ilen = pluginHandlers.length; i < ilen; i++) {
+                this.handlers[pluginHandlers[i]] = new Signal();
+            }
+        };
 
+/*
         this.test0 = new Signal();
-        this.test1 = new Signal();
-        this.test2 = new Signal();
-        this.test3 = new Signal();
-        this.test4 = new Signal();
-        this.test5 = new Signal();
-        this.test6 = new Signal();
-        this.test7 = new Signal();
+*/
     };
 
     return new Comet();
@@ -348,9 +360,9 @@ var Comet = (function(Ajax, Util, Signal) {
 
 console.log("TrayIcon");
 
-var TrayIcon = (function(Util, Comet) {
+var TrayIcon = (function(Util) {
     var instance;
-    var timer = null, timeout = 5000,
+    var timer = null, timeout = 10 * 1000,
         domContainer = Util.$id("TrayIcon"),
         domClose = Util.$id("TrayIconClose"),
         domPluginContainer = Util.$id("TrayIconPluginContainer");
@@ -392,7 +404,7 @@ var TrayIcon = (function(Util, Comet) {
 
     return new TrayIcon();
 
-})(Util, Comet);
+})(Util);
 
 console.log("Selector")
 
@@ -529,8 +541,8 @@ var Selector = (function(Util, Signal) {
             obj.params = args;
 
             for (var i = 0, ilen = items.length, el; i < ilen; i++) {
-                el = Util.isNumber(items[i]) ? selectables[items[i]] : items[i];
-                idx = Util.isNumber(items[i]) ? items[i] : getIdx(items[i].id);
+                el = !Util.isElement(items[i]) ? selectables[items[i]] : items[i];
+                idx = !Util.isElement(items[i]) ? items[i] : getIdx(items[i].id);
 
                 obj.items.push(idx);
 
@@ -653,12 +665,85 @@ var Selector = (function(Util, Signal) {
 })(Util, Signal);
 
 
-var selector = new Selector(Util.$id("selectRoot"));
+
+var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, Ajax) {
+    var plugins = {};
+
+    return {
+        register: function(handler, plugin) {
+            if (!plugins[handler]) {
+                plugins[handler] = plugin;
+            }
+        },
+        initPlugins: function() {
+            for (var i in plugins) {
+                if (plugins.hasOwnProperty(i)) {
+                    plugins[i] = new plugins[i](Comet.handlers[i]);
+                }
+            }
+        },
+        getHandlerNames: function() {
+            var handlerNames = [];
+            for (var i in plugins) {
+                if (plugins.hasOwnProperty(i)) {
+                    handlerNames.push(i);
+                }
+            }
+            return handlerNames;
+        }
+
+    }
+})(Comet, TrayIcon,  /*, Clipboard, Widget, */ Util, Ajax);
+
+var PluginPaint = (function(Selector) {
+    return function(cometHandler) {
+        this.color = null;
+        this.selector = new Selector(Util.$id("selectRoot"));
+
+        Util.connect('click', Util.$id('resetBtn'), function(e) {
+            var returnVal = this.selector.reset();
+            console.log(returnVal);
+        }, this);
+
+        Util.connect('click', Util.$id('commit3Btn'), function(e) {
+            var returnVal = this.selector.commit();
+            console.log(returnVal);
+            this.color = Util.$id('color').value;
+            returnVal.params.push(this.color);
+
+            Ajax.send("http://test.localhost.lan:88/test?ajax", {
+                success: function(responseText) { this.selector.reset(); },
+                error: function(statusCode) { console.log('Failure: ' + statusCode); }
+            }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
+
+            console.log(returnVal);
+        }, this);
+
+        var trayIconContent = function(data) {
+            var content = '<div>PluginPaint Update - ' + data.items.join(", ") + '</div>';
+            TrayIcon.show(content);
+        };
+
+        var cometCallback = function(data) {
+            this.selector.commit(data, function(el, color) {
+                el.style.backgroundColor = color;
+            }, this.color);
+        };
+
+        cometHandler.connect(trayIconContent);
+        cometHandler.connect(cometCallback, this);
+
+        //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
+    };
+})(Selector);
+
+PluginManager.register("paint", PluginPaint);
+Comet.registerPlugins(PluginManager.getHandlerNames());
+PluginManager.initPlugins();
 
 
-
-
-var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
+//var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
+/*
     var trayIconContent = function(data) {
         var content = '<div style="background-color:red; height: 100%; font-weight:bold;">PluginTest0 - ' + data + '</div>';
         TrayIcon.show(content);
@@ -666,28 +751,8 @@ var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
 
     Comet.test0.connect(trayIconContent);
     //Comet.test0.connect(console.log);
-
+*/
     //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
 
-})(Comet, TrayIcon);
+//})(Comet, TrayIcon);
 
-
-//
-//Comet.test1.connect(console.log);
-Comet.test1.connect(TrayIcon.show);
-//
-//Comet.test2.connect(console.log);
-Comet.test2.connect(TrayIcon.show);
-//
-//Comet.test3.connect(console.log);
-Comet.test3.connect(TrayIcon.show);
-//
-//Comet.test4.connect(console.log);
-Comet.test4.connect(TrayIcon.show);
-//
-//Comet.test5.connect(console.log);
-//Comet.test5.connect(console.info);
-Comet.test5.connect(TrayIcon.show);
-//
-//Comet.test6.connect(console.log);
-//Comet.test6.connect(TrayIcon.show);

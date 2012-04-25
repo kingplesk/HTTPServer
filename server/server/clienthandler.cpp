@@ -56,7 +56,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
     QByteArray byteArray = QByteArray().append(http->request_->getBody());
     QString json = QUrl::fromEncoded(byteArray).toString();
     qDebug() << json;
-
+/*
     QScriptEngine engine;
     QScriptValue sc = engine.evaluate("(" + QString(json) + ")");
 
@@ -73,7 +73,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
         qDebug() << its.name() << ": " << its.value().toString();
     }
-
+*/
 
 
 
@@ -87,6 +87,11 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
     if (!ok) {
         qFatal("An error occurred during parsing");
         exit (1);
+    }
+
+    QString handler;
+    if (variantMap.contains("handler")) {
+        handler = variantMap["handler"].toString();
     }
 
     qDebug() << variantMap;
@@ -112,6 +117,10 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QByteArray json = serializer.serialize(newVariantMap);
         qDebug() << "JOSN-STRING-TEST-1: " << json;
 
+        //Server * parentServer = qobject_cast<Server *>(this->parent());
+        //parentServer->broadcast(QString().append(json));
+
+        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"));
 
         qDebug() << "newRequest";
 
@@ -120,7 +129,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
             //QJson::QObjectHelper::qvariant2qobject(variantData, mi);
         }
 
-        reply.append("[0, {\"handler\":\"" + mi->getString() + "\"}]");
+        reply.append("[0, {\"handler\":\"" + handler + "\"}]");
     }
     else {
         reply.append("[1, {\"handler\":\"nono-plugin\"}]");

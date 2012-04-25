@@ -68,6 +68,7 @@ void Server::handle()
         http->response_->addCookie(uuid);
 
         ch = new ClientHandler(this);
+        connect(ch, SIGNAL(broadcast(QString)), this, SLOT(broadcast(QString)));
         clients_[uuid] = ch;
     }
 

@@ -144,7 +144,7 @@
     <style type="text/css">
         .TrayIcon { height: 80px; width: 200px; position: fixed; right:1px; bottom: 50px; clear: both; background-color: #eee; }
         .TrayIconClose { float: left; width: 20px; height: 79px; border-right: 1px solid #ccc; cursor: pointer; text-align: center;}
-        .TrayIconPluginContainer { height: 70px; padding: 5px 5px 5px 25px; }
+        .TrayIconPluginContainer { height: 70px; padding: 5px 5px 5px 5px; overflow-y: auto;}
     </style>
     <div id="TrayIcon" class="TrayIcon" style="display: none;">
         <div id="TrayIconClose" class="TrayIconClose">x</div>
@@ -163,12 +163,10 @@
 
 
 //Comet test
-
 Comet.start();
 
 
 //Http Request test
-
 $(Util.$id('submitBtn')).bind('click', function(e) {
     var postVars = Util.$id('postVars').value;
 
@@ -185,8 +183,11 @@ $(Util.$id('submitBtn')).bind('click', function(e) {
 //Selector test
 
 $(Util.$id('resetBtn')).bind('click', function(e) {
+//@see: script.js PluginPaint
+/*
     var returnVal = selector.reset();
     console.log(returnVal);
+*/
 });
 
 $(Util.$id('commit1Btn')).bind('click', function(e) {
@@ -205,6 +206,9 @@ $(Util.$id('commit2Btn')).bind('click', function(e) {
 });
 
 $(Util.$id('commit3Btn')).bind('click', function(e) {
+
+//@see: script.js PluginPaint
+/*
     var color = Util.$id('color').value;
 
     var returnVal = selector.commit(function(el, color) {
@@ -217,6 +221,7 @@ $(Util.$id('commit3Btn')).bind('click', function(e) {
     }, null, JSON.stringify({ handler: 'paint', data: returnVal }));
 
     console.log(returnVal);
+*/
 });
 
 </script>

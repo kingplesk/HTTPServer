@@ -23,7 +23,6 @@ class Server : public QObject
         void start(qint16 port = 8888);
         void sendReply(QByteArray response);
         void loadPlugins();
-        void broadcast(QString json);
 
     signals:
         void newRequest();
@@ -32,6 +31,7 @@ class Server : public QObject
         void handle();
         void update();
         void newConnection();
+        void broadcast(QString json);
 
     private:
         int i_;
