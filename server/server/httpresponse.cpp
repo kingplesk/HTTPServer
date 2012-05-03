@@ -3,8 +3,8 @@
 #include "httpresponse.h"
 
 HttpResponse::HttpResponse(QObject * parent) :
-    QObject(parent),
-    header_()
+    QObject(parent)/*,
+    header_()*/
 {
     header_.setStatusLine(200, "OK", 1, 1);
     header_.addValue("Connection", "close");
@@ -42,6 +42,8 @@ void HttpResponse::setBody(QByteArray body)
 
 QByteArray HttpResponse::getResponse()
 {
+    //qDebug() << "getResponse : header_ : " << header_.toString();
+
     return QByteArray().append(header_.toString());
 }
 

@@ -17,7 +17,6 @@
 
 ClientHandler::ClientHandler(QObject * parent) :
     QObject(parent),
-    comets_(0),
     requests_(0)
 {
     i_ = 0;
@@ -25,28 +24,62 @@ ClientHandler::ClientHandler(QObject * parent) :
 
 void ClientHandler::sendComet(QString json)
 {
-    QMutableVectorIterator<Http *> i(comets_);
+    QMutableMapIterator<Http *, QTimer*> i(comets_);
     while (i.hasNext()) {
-        Http * next = i.next();
-        QAbstractSocket::SocketState state = next->state();
-        qDebug() << "TEST -----" << state;
+        i.next();
+
+        if (i.key()->state() != QAbstractSocket::ConnectedState) {
+            i.remove();
+            continue;
+        }
+
+        qDebug() << "isTimerActive : " << i.value()->isActive() << i.value();
+
+        if (i.value()->isActive()) {
+            i.value()->stop();
+            //i.value()->deleteLater();
+
+            qDebug() << "stopTimer";
+        }
+
+        QAbstractSocket::SocketState state = i.key()->state();
+        //qDebug() << "QMutableVectorIterator : " << state;
         if (state == QAbstractSocket::ConnectedState) {
-            next->sendReply(QByteArray().append(json));
+            qDebug() << "   next->sendReply : " << state;
+            i.key()->sendReply(QByteArray().append(json));
         }
         else {
-            i.remove();
+            qDebug() << "   i.remove : " << state;
+            //timer_
+
         }
+
+        i.remove();
     }
 }
 
 void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
 {
-    comets_.append(http);
+    QTimer * timer = new QTimer(http);
 
-    timer_ = new QTimer(this);
-    //timer_->setSingleShot(true);
-    //timer_->setInterval(30 * 1000);
-    timer_->singleShot(30 * 1000, http, SLOT(closeComet()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(closeComet()));
+    //connect(timer, SIGNAL(timeout()), http, SLOT(closeComet()));
+
+    timer->setSingleShot(true);
+    timer->setInterval(30 * 1000);
+    timer->start();
+
+    comets_[http] = timer;
+
+    //timer->singleShot(30 * 1000, http, SLOT(closeComet()));
+}
+
+void ClientHandler::closeComet()
+{
+    QTimer * timer = qobject_cast<QTimer *>(sender());
+    Http * http = comets_.key(timer);
+    http->closeComet();
+    comets_.remove(http);
 }
 
 void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
@@ -123,11 +156,12 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"));
 
         qDebug() << "newRequest";
-
+/*
         if (handler.contains("paint")) {
             MyInterface *myinstance = createPluginInstance(handler, p, variantData);
             //QJson::QObjectHelper::qvariant2qobject(variantData, mi);
         }
+*/
 
         reply.append("[0, {\"handler\":\"" + handler + "\"}]");
     }

@@ -30,10 +30,11 @@ class ClientHandler : public QObject
         void broadcast(QString json);
 
     public slots:
+        void closeComet();
 
     private:
         QTimer * timer_;
-        QVector<Http *> comets_;
+        QMap<Http *,  QTimer *> comets_;
         QVector<Http *> requests_;
         void * newValue_;
 

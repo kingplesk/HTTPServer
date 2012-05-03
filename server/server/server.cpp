@@ -82,7 +82,7 @@ void Server::handle()
         ch->newRequest(http, p_);
     }
 
-    qDebug() << ch->i_++ << http->request_;
+    qDebug() << http->request_ << http->response_;
 }
 
 void Server::update()
@@ -94,14 +94,10 @@ void Server::broadcast(QString json)
 {
     qDebug() << json;
 
-    qint64 ii = 0;
-
     QMutableMapIterator<QString, ClientHandler *> i(clients_);
     while (i.hasNext()) {
         i.next();
         i.value()->sendComet(json);
-
-        //qDebug() << (++ii) << i.key() << ": " << i.value();
     }
 }
 
