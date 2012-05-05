@@ -51,7 +51,7 @@ void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 
         state_ = QAbstractSocket::ClosingState;
 
-        qDebug() << "stateChanged:" << socket_->state() << ":" << state_;
+        //qDebug() << "stateChanged:" << socket_->state() << ":" << state_;
 
         deleteLater();
     }
@@ -59,7 +59,7 @@ void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 
 void Http::closeComet()
 {
-    qDebug() << "sendCloseResponse";
+    //qDebug() << "sendCloseResponse";
 
     sendReply(QByteArray(""));
 }
@@ -67,7 +67,7 @@ void Http::closeComet()
 void Http::sendReply(QByteArray body)
 {
     if (state_ != QAbstractSocket::ConnectedState) {
-        qDebug() << "sendReply Sate:" << socket_->state() << ":" << state_;
+        //qDebug() << "sendReply Sate:" << socket_->state() << ":" << state_;
     }
 
     /*if (!response_) {

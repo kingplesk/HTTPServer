@@ -178,6 +178,9 @@ var Util = (function() {
             else if (el.detachEvent) {
                 el.detachEvent ("on" + event, eventWrapper(callback, context));
             }
+        },
+        "convert": function(value, base) {
+
         }
     };
 
@@ -695,13 +698,62 @@ var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, A
     }
 })(Comet, TrayIcon,  /*, Clipboard, Widget, */ Util, Ajax);
 
-var PluginPaint = (function(Selector) {
+console.log('ColorPicker')
+
+var ColorPicker = (function(Util, Signal) {
+
+    var ul = document.createElement('ul'), dec2hex = ['00', '11', '22', '33', '44', '55', '66', '77', '88', '99', 'AA', 'BB', 'CC', 'DD', 'EE', 'FF'];
+    Util.addClass(ul, 'ColorPicker');
+
+    return function(el) {
+        var li, color, r, g, b;
+        for (r = 0; r < 16; r++) {
+            for (g = 0; g < 16; g++) {
+                for (b = 0; b < 16; b++) {
+                    li = document.createElement('li');
+                    li.style.backgroundColor = '#' + dec2hex[r] + dec2hex[g] + dec2hex[b];
+                    Util.addClass(li, 'ColorPickerItem');
+
+                    ul.appendChild(li);
+                }
+            }
+        }
+
+        el.appendChild(ul);
+
+        this.onSelect = new Signal();
+
+        Util.connect('click', el, function(e, src) {
+            this.onSelect.emit(src.style.backgroundColor);
+        }, this);
+    };
+})(Util, Signal);
+
+console.log('PluginPaint');
+
+var PluginPaint = (function(Selector, ColorPicker) {
+    var colorPicker = new ColorPicker(Util.$id('colorPicker'));
+
     return function(cometHandler) {
         this.color = null;
         this.selector = new Selector(Util.$id("selectRoot"));
 
         Util.connect('click', Util.$id('resetBtn'), function(e) {
             var returnVal = this.selector.reset();
+            console.log(returnVal);
+        }, this);
+
+        colorPicker.onSelect.connect(function(color) {
+            var returnVal = this.selector.commit();
+            console.log(returnVal);
+            this.color = color;
+            returnVal.params.push(this.color);
+
+            Ajax.send("http://test.localhost.lan:88/test?ajax", {
+                success: function(responseText) { this.selector.reset(); },
+                error: function(statusCode) { console.log('Failure: ' + statusCode); }
+            }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
+
             console.log(returnVal);
         }, this);
 
@@ -735,7 +787,7 @@ var PluginPaint = (function(Selector) {
 
         //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
     };
-})(Selector);
+})(Selector, ColorPicker);
 
 PluginManager.register("paint", PluginPaint);
 Comet.registerPlugins(PluginManager.getHandlerNames());

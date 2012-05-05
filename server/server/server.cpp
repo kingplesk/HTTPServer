@@ -1,6 +1,7 @@
 
 #include <QDir>
 #include <QUuid>
+#include <QDateTime>
 #include <QCoreApplication>
 #include <QMutableMapIterator>
 
@@ -51,6 +52,8 @@ void Server::newConnection()
 
 void Server::handle()
 {
+    QDateTime before = QDateTime::currentDateTime();
+
     Http * http = qobject_cast<Http *>(sender());
     this->disconnect(http, SIGNAL(newRequest()));
 
@@ -80,9 +83,12 @@ void Server::handle()
 
     if (http->request_->isAjax()) {
         ch->newRequest(http, p_);
+
+        QDateTime after = QDateTime::currentDateTime();
+        qDebug("handle: %d", before.msecsTo(after));
     }
 
-    qDebug() << http->request_ << http->response_;
+    //qDebug() << http->request_ << http->response_;
 }
 
 void Server::update()
@@ -94,12 +100,19 @@ void Server::broadcast(QString json)
 {
     qDebug() << json;
 
+
+    QDateTime before = QDateTime::currentDateTime();
+
     QMutableMapIterator<QString, ClientHandler *> i(clients_);
     while (i.hasNext()) {
         i.next();
         i.value()->sendComet(json);
     }
+
+    QDateTime after = QDateTime::currentDateTime();
+    qDebug("broadcast: %d", before.msecsTo(after));
 }
+
 
 void Server::loadPlugins()
 {

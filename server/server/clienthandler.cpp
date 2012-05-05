@@ -33,23 +33,23 @@ void ClientHandler::sendComet(QString json)
             continue;
         }
 
-        qDebug() << "isTimerActive : " << i.value()->isActive() << i.value();
+        //qDebug() << "isTimerActive : " << i.value()->isActive() << i.value();
 
         if (i.value()->isActive()) {
             i.value()->stop();
             //i.value()->deleteLater();
 
-            qDebug() << "stopTimer";
+            //qDebug() << "stopTimer";
         }
 
         QAbstractSocket::SocketState state = i.key()->state();
         //qDebug() << "QMutableVectorIterator : " << state;
         if (state == QAbstractSocket::ConnectedState) {
-            qDebug() << "   next->sendReply : " << state;
+            //qDebug() << "   next->sendReply : " << state;
             i.key()->sendReply(QByteArray().append(json));
         }
         else {
-            qDebug() << "   i.remove : " << state;
+            //qDebug() << "   i.remove : " << state;
             //timer_
 
         }
@@ -88,7 +88,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
     QByteArray byteArray = QByteArray().append(http->request_->getBody());
     QString json = QUrl::fromEncoded(byteArray).toString();
-    qDebug() << json;
+    //qDebug() << json;
 /*
     QScriptEngine engine;
     QScriptValue sc = engine.evaluate("(" + QString(json) + ")");
@@ -127,11 +127,11 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         handler = variantMap["handler"].toString();
     }
 
-    qDebug() << variantMap;
+    //qDebug() << variantMap;
 
     QVariantMap variantData = variantMap["data"].toMap();
 
-    qDebug() << variantData;
+    //qDebug() << variantData;
 
 
 
@@ -148,14 +148,14 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
         QJson::Serializer serializer;
         QByteArray json = serializer.serialize(newVariantMap);
-        qDebug() << "JOSN-STRING-TEST-1: " << json;
+        //qDebug() << "JOSN-STRING-TEST-1: " << json;
 
         //Server * parentServer = qobject_cast<Server *>(this->parent());
         //parentServer->broadcast(QString().append(json));
 
         emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"));
 
-        qDebug() << "newRequest";
+        //qDebug() << "newRequest";
 /*
         if (handler.contains("paint")) {
             MyInterface *myinstance = createPluginInstance(handler, p, variantData);
@@ -194,7 +194,7 @@ MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QStri
     QByteArray json = serializer.serialize(variantMap);
 
 
-    qDebug() << "JOSN-STRING-TEST-2: " << json;
+    //qDebug() << "JOSN-STRING-TEST-2: " << json;
 
 
     MyInterface *mi = qobject_cast<MyInterface *>(plugin);

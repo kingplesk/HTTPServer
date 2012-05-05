@@ -47,7 +47,16 @@
 
 
 <style type="text/css">
-    ul { width: 400px; height: 400px; list-style: none none outside; clear: both; margin: 50px 0 0 50px; padding: 0; background-color: #ccc; border-left: 1px solid #999; border-top: 1px solid #333; }
+    div.ColorPicker { width: 320px; float: left; margin: 50px 0 0 50px;}
+    ul.ColorPicker { width: 320px; height: 320px; list-style: none none outside; clear: both; margin: 0; padding: 0; background-color: #ccc; border:none;}
+    li.ColorPickerItem { float: left; width: 5px; height: 5px; margin: 0; padding: 0; border: none;}
+</style>
+
+<div id="colorPicker" class="ColorPicker"></div>
+
+
+<style type="text/css">
+    ul { width: 400px; height: 400px; list-style: none none outside; float: left; margin: 50px 0 0 50px; padding: 0; background-color: #ccc; border-left: 1px solid #999; border-top: 1px solid #333; }
     li { float: left; width: 19px; height: 19px; margin: 0; padding: 0; border-right: 1px solid #999; border-bottom: 1px solid #999; }
     li.state-selected { background-image: url(img/selected.png) !important; opacity:0.6; filter:alpha(opacity=60); }
 </style>
