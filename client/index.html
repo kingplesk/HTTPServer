@@ -171,8 +171,16 @@
 <script type="text/javascript">
 
 
-//Comet test
-Comet.start();
+//Init ClientHandler and Comet test
+Ajax.send("http://test.localhost.lan:88/test", {
+    success: function(responseText) {
+        console.log('Init ClientHandler', document.cookie);
+
+        Comet.start();
+    },
+    error: function(statusCode) { console.log('Failure: ' + statusCode); }
+});
+
 
 
 //Http Request test

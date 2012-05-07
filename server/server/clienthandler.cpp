@@ -17,14 +17,16 @@
 
 ClientHandler::ClientHandler(QObject * parent) :
     QObject(parent),
-    requests_(0)
+    requests_(0),
+    uuid()
 {
+    lastUpdated = QDateTime::currentDateTime();
     i_ = 0;
 }
 
 void ClientHandler::sendComet(QString json)
 {
-    QMutableMapIterator<Http *, QTimer*> i(comets_);
+    QMutableMapIterator<Http *, QTimer *> i(comets_);
     while (i.hasNext()) {
         i.next();
 
@@ -46,6 +48,7 @@ void ClientHandler::sendComet(QString json)
         //qDebug() << "QMutableVectorIterator : " << state;
         if (state == QAbstractSocket::ConnectedState) {
             //qDebug() << "   next->sendReply : " << state;
+            lastUpdated = QDateTime::currentDateTime();
             i.key()->sendReply(QByteArray().append(json));
         }
         else {
@@ -56,6 +59,18 @@ void ClientHandler::sendComet(QString json)
 
         i.remove();
     }
+
+    checkState();
+}
+
+void ClientHandler::checkState()
+{
+    QDateTime now = QDateTime::currentDateTime();
+    if (comets_.isEmpty() && lastUpdated.secsTo(now) > (2 * 60)) {
+        deleteLater();
+
+        emit deleteClientHandler(uuid);
+    }
 }
 
 void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
@@ -63,15 +78,14 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
     QTimer * timer = new QTimer(http);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(closeComet()));
-    //connect(timer, SIGNAL(timeout()), http, SLOT(closeComet()));
 
     timer->setSingleShot(true);
     timer->setInterval(30 * 1000);
     timer->start();
 
-    comets_[http] = timer;
+    lastUpdated = QDateTime::currentDateTime();
 
-    //timer->singleShot(30 * 1000, http, SLOT(closeComet()));
+    comets_[http] = timer;
 }
 
 void ClientHandler::closeComet()
@@ -80,11 +94,15 @@ void ClientHandler::closeComet()
     Http * http = comets_.key(timer);
     http->closeComet();
     comets_.remove(http);
+
+    checkState();
 }
 
 void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 {
     //requests_.append(http);
+
+    lastUpdated = QDateTime::currentDateTime();
 
     QByteArray byteArray = QByteArray().append(http->request_->getBody());
     QString json = QUrl::fromEncoded(byteArray).toString();

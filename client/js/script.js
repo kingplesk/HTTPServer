@@ -77,7 +77,13 @@ var Util = (function() {
             return { "x": x, "y": y };
         },
         "getUniqueId" : function() {
-            return (new Date()).getTime() + "." + (Math.random() * 10000 + 10000);
+            var hash = "", i, length = 40, idx, map = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (i = 0; i < 40; i++) {
+                idx = parseInt(Math.random() * 10000 / (Math.random() + 1) % 62);
+                hash += map[idx];
+            }
+
+            return hash;
         },
         "hide": function(el) {
             el.style.display = "none";
@@ -211,8 +217,8 @@ var Ajax = (function() {
         if (xhr) {
             xhr.onreadystatechange = function() {
                 if (xhr.readyState !== 4) return;
-                if (xhr.status === 200) callback.success.call(context, xhr.responseText, xhr.responseXML);
-                else callback.error.call(context, xhr.status);
+                if (xhr.status === 200) callback.success && callback.success.call(context, xhr.responseText, xhr.responseXML);
+                else callback.error && callback.error.call(context, xhr.status);
             };
             xhr.open(method, url, true);
             xhr.setRequestHeader('Content-Type', 'application/json');

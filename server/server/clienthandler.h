@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QVector>
+#include <QDateTime>
 #include <QMutableVectorIterator>
 #include <QByteArray>
 #include <QPluginLoader>
@@ -21,13 +22,16 @@ class ClientHandler : public QObject
         void sendComet(QString json);
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
+        void checkState();
         MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p);
         MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p, QVariantMap map);
 
         qint16 i_;
-
+        QString uuid;
+        QDateTime lastUpdated;
     signals:
         void broadcast(QString json);
+        void deleteClientHandler(QString uuid);
 
     public slots:
         void closeComet();
@@ -37,7 +41,6 @@ class ClientHandler : public QObject
         QMap<Http *,  QTimer *> comets_;
         QVector<Http *> requests_;
         void * newValue_;
-
 };
 
 #endif // CLIENTHANDLER_H
