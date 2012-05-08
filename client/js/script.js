@@ -185,8 +185,20 @@ var Util = (function() {
                 el.detachEvent ("on" + event, eventWrapper(callback, context));
             }
         },
-        "convert": function(value, base) {
+        "clone": function(obj) {
+            var clone = this.isArray(obj) ? [] : {};
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    if (this.isObject(obj[i]) || this.isArray(obj[i])) {
+                        clone[i] = this.clone(obj[i]);
+                    }
+                    else {
+                        clone[i] = obj[i];
+                    }
+                }
+            }
 
+            return clone;
         }
     };
 
@@ -559,8 +571,6 @@ var Selector = (function(Util, Signal) {
                 Util.removeClass(items[i], selectedClass);
             }
 
-            snapshot = [];
-
             return obj;
         };
 
@@ -583,11 +593,11 @@ var Selector = (function(Util, Signal) {
          *      object commit()                                     -> n.a.
          */
 
-        function commitObject(object, callbackItem) {
-            var args = object.params || [];
+        function commitObject(obj, callbackItem) {
+            var args = obj.params || [];
             args.splice(0, 0, callbackItem);
 
-            return iterator.apply(null, [object.items].concat(args));
+            return iterator.apply(null, [obj.items].concat(args));
         }
 
         function commitNull() {
@@ -601,6 +611,7 @@ var Selector = (function(Util, Signal) {
 
         this.commit = function(fctOrObject) {
             var args = Array.prototype.slice.call(arguments);
+            args = Util.clone(args);
 
             if (args.length === 0) {
                 return commitNull();
