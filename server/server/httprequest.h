@@ -15,6 +15,7 @@ class HttpRequest : public QObject
         bool isAjax();
         QString getCookie(const QString & name);
         QString getBody();
+        QString getTid();
 
     private:
         QHttpRequestHeader header_;

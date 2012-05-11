@@ -303,10 +303,12 @@ console.log("Comet");
 var Comet = (function(Ajax, Util, Signal) {
     var instance;
     var isStarted = false;
+    var tid = (new Date()).getTime();
+
     var newComet = function(sleep) {
         sleep = sleep || 0;
         setTimeout(function() {
-            Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId(), callback);
+            Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid, callback);
         }, sleep);
     };
 

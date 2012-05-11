@@ -17,6 +17,8 @@ CONFIG   += console
 CONFIG   -= app_bundle
 #CONFIG   += qt debug_and_release
 
+QMAKE_CXXFLAGS += -std=c++0x
+
 TEMPLATE = app
 
 #---

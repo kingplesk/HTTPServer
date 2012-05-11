@@ -6,29 +6,50 @@
 #include <QObject>
 #include <QVector>
 #include <QDateTime>
-#include <QMutableVectorIterator>
 #include <QByteArray>
 #include <QPluginLoader>
 
 #include "http.h"
 #include "myinterface.h"
 
+
+
+struct comet {
+    Http * http;
+    QTimer * timer;
+    qint64 lastMessageId;
+    QDateTime lastUpdated;
+    QString tid;
+};
+
 class ClientHandler : public QObject
 {
     Q_OBJECT
 
     public:
+        template<typename Func>
+        void cometIterator(Func func)
+        {
+            for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+                comet& nextComet = it.value();
+                func(nextComet);
+            }
+        }
+
         ClientHandler(QObject * parent = 0);
         void sendComet(QString json);
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
         void checkState();
+        bool cometsEmpty();
+        comet& getComet(QTimer * timer);
+        comet& getComet(Http * http);
+        comet& getComet(QString tid);
         MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p);
-        MyInterface * createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p, QVariantMap map);
 
-        qint16 i_;
         QString uuid;
         QDateTime lastUpdated;
+
     signals:
         void broadcast(QString json);
         void deleteClientHandler(QString uuid);
@@ -38,9 +59,8 @@ class ClientHandler : public QObject
 
     private:
         QTimer * timer_;
-        QMap<Http *,  QTimer *> comets_;
-        QVector<Http *> requests_;
-        void * newValue_;
+        QMap<QString, comet> comets_;
+        QVector<QString> messageQueue_;
 };
 
 #endif // CLIENTHANDLER_H

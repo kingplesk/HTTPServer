@@ -9,6 +9,17 @@ HttpRequest::HttpRequest(QHttpRequestHeader header, QByteArray body, QObject * p
 {
 }
 
+QString HttpRequest::getTid()
+{
+    QRegExp rx("(.*)tid=([^&]*).*");
+
+    if (rx.exactMatch(header_.path())) {
+        return rx.cap(2);
+    }
+
+    return QString();
+}
+
 bool HttpRequest::isComet()
 {
     return header_.path().contains("notify", Qt::CaseInsensitive);

@@ -1,10 +1,5 @@
 
 #include <QUrl>
-#include <QStringList>
-#include <QScriptValue>
-#include <QScriptEngine>
-#include <QScriptValueIterator>
-#include <QRegExp>
 #include <QDateTime>
 #include <QVariant>
 #include <QVariantMap>
@@ -17,56 +12,69 @@
 
 ClientHandler::ClientHandler(QObject * parent) :
     QObject(parent),
-    requests_(0),
     uuid()
 {
     lastUpdated = QDateTime::currentDateTime();
-    i_ = 0;
 }
 
 void ClientHandler::sendComet(QString json)
 {
-    QMutableMapIterator<Http *, QTimer *> i(comets_);
-    while (i.hasNext()) {
-        i.next();
+    messageQueue_ << json;
+    int messageId = messageQueue_.lastIndexOf(json);
 
-        if (i.key()->state() != QAbstractSocket::ConnectedState) {
-            i.remove();
-            continue;
-        }
+    /*
+        http://msdn.microsoft.com/de-de/library/dd293599.aspx
+        http://www.cprogramming.com/c++11/c++11-lambda-closures.html
 
-        //qDebug() << "isTimerActive : " << i.value()->isActive() << i.value();
+        []          Capture nothing (or, a scorched earth strategy?)
+        [&]         Capture any referenced variable by reference
+        [=]         Capture any referenced variable by making a copy
+        [=, &foo]   Capture any referenced variable by making a copy, but capture variable foo by reference
+        [bar]       Capture bar by making a copy; don't copy anything else
+        [this]      Capture the this pointer of the enclosing class
+    */
 
-        if (i.value()->isActive()) {
-            i.value()->stop();
-            //i.value()->deleteLater();
+    cometIterator([&, this](comet& nextComet) {
+        if (nextComet.http && nextComet.http->state() == QAbstractSocket::ConnectedState) {
+            //stop auto closing timer for current comet
+            if (nextComet.timer->isActive()) {
+                nextComet.timer->stop();
+            }
 
-            //qDebug() << "stopTimer";
-        }
-
-        QAbstractSocket::SocketState state = i.key()->state();
-        //qDebug() << "QMutableVectorIterator : " << state;
-        if (state == QAbstractSocket::ConnectedState) {
-            //qDebug() << "   next->sendReply : " << state;
             lastUpdated = QDateTime::currentDateTime();
-            i.key()->sendReply(QByteArray().append(json));
-        }
-        else {
-            //qDebug() << "   i.remove : " << state;
-            //timer_
-
+            nextComet.lastUpdated = QDateTime::currentDateTime();
+            nextComet.lastMessageId =  messageId;
+            nextComet.http->sendReply(QByteArray().append(json));
         }
 
-        i.remove();
-    }
+        nextComet.http = 0;
+        nextComet.timer = 0;
+        nextComet.tid = '-1';
+    });
+
+    qDebug() << uuid << "MessageQueue: " << messageQueue_;
 
     checkState();
+}
+
+bool ClientHandler::cometsEmpty()
+{
+    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+        comet& nextComet = it.value();
+        if (nextComet.http) {
+            return false;
+        }
+    }
+
+    qDebug() << "CometsEmpty:";
+
+    return true;
 }
 
 void ClientHandler::checkState()
 {
     QDateTime now = QDateTime::currentDateTime();
-    if (comets_.isEmpty() && lastUpdated.secsTo(now) > (2 * 60)) {
+    if (cometsEmpty() && lastUpdated.secsTo(now) > (2 * 60)) {
         deleteLater();
 
         emit deleteClientHandler(uuid);
@@ -85,51 +93,77 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
 
     lastUpdated = QDateTime::currentDateTime();
 
-    comets_[http] = timer;
+    //comet
+    QString tid = http->request_->getTid();
+
+    comet newComet;
+    newComet.tid = tid;
+    newComet.http = http;
+    newComet.timer = timer;
+    newComet.lastMessageId = -1;
+    newComet.lastUpdated = QDateTime::currentDateTime();
+
+    comets_[tid] = newComet;
+    qDebug() << uuid << 'Number of concurrent comets: ' << comets_.count();
 }
 
 void ClientHandler::closeComet()
 {
     QTimer * timer = qobject_cast<QTimer *>(sender());
-    Http * http = comets_.key(timer);
-    http->closeComet();
-    comets_.remove(http);
+    comet& closingComet = getComet(timer);
+    QString tid = closingComet.tid;
+
+    qDebug() << uuid << "closeComet" << tid;
+
+    closingComet.http->closeComet();
+    closingComet.http = 0;
+    closingComet.timer = 0;
+    closingComet.tid = '-1';
 
     checkState();
 }
 
+comet& ClientHandler::getComet(QTimer * timer)
+{
+    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+        comet& nextComet = it.value();
+        if (nextComet.timer == timer) {
+            return nextComet;
+        }
+    }
+}
+
+comet& ClientHandler::getComet(QString tid)
+{
+    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+        comet& nextComet = it.value();
+        if (nextComet.tid == tid) {
+            return nextComet;
+        }
+    }
+}
+
+comet& ClientHandler::getComet(Http * http)
+{
+    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+        comet& nextComet = it.value();
+        if (nextComet.http == http) {
+            return nextComet;
+        }
+    }
+}
+
 void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 {
-    //requests_.append(http);
-
     lastUpdated = QDateTime::currentDateTime();
 
     QByteArray byteArray = QByteArray().append(http->request_->getBody());
     QString json = QUrl::fromEncoded(byteArray).toString();
     //qDebug() << json;
-/*
-    QScriptEngine engine;
-    QScriptValue sc = engine.evaluate("(" + QString(json) + ")");
 
-    qDebug() << sc.toString();
-
-    QString handler;
-    QScriptValueIterator its(sc);
-    while (its.hasNext()) {
-        its.next();
-
-        if (its.name() == "handler") {
-            handler = its.value().toString();
-        }
-
-        qDebug() << its.name() << ": " << its.value().toString();
-    }
-*/
-
-
-
-
-
+    /**
+    * QJSON & OwnPlugin
+    */
     QByteArray qjson = QByteArray().append(json);
     QJson::Parser parser;
     bool ok;
@@ -145,19 +179,11 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         handler = variantMap["handler"].toString();
     }
 
-    //qDebug() << variantMap;
-
     QVariantMap variantData = variantMap["data"].toMap();
-
-    //qDebug() << variantData;
-
-
-
 
     QString reply("");
     if (p.contains(handler)) {
         MyInterface *mi = createPluginInstance(handler, p);
-
 
         QObject *object = dynamic_cast<QObject *>(mi);
         //convert qvariantmap into object
@@ -168,18 +194,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QByteArray json = serializer.serialize(newVariantMap);
         //qDebug() << "JOSN-STRING-TEST-1: " << json;
 
-        //Server * parentServer = qobject_cast<Server *>(this->parent());
-        //parentServer->broadcast(QString().append(json));
-
         emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"));
-
-        //qDebug() << "newRequest";
-/*
-        if (handler.contains("paint")) {
-            MyInterface *myinstance = createPluginInstance(handler, p, variantData);
-            //QJson::QObjectHelper::qvariant2qobject(variantData, mi);
-        }
-*/
 
         reply.append("[0, {\"handler\":\"" + handler + "\"}]");
     }
@@ -193,28 +208,6 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p)
 {
     QObject *plugin = p[pluginName]->instance();
-    MyInterface *mi = qobject_cast<MyInterface *>(plugin);
-
-    return mi;
-}
-
-MyInterface * ClientHandler::createPluginInstance(QString pluginName, QMap<QString, QPluginLoader *>& p, QVariantMap map)
-{
-//get the plugin instance by handlerName
-    QObject *plugin = p[pluginName]->instance();
-
-//convert qvariantmap into object
-    QJson::QObjectHelper::qvariant2qobject(map, plugin);
-
-//convert object to json
-    QVariantMap variantMap = QJson::QObjectHelper::qobject2qvariant(plugin);
-    QJson::Serializer serializer;
-    QByteArray json = serializer.serialize(variantMap);
-
-
-    //qDebug() << "JOSN-STRING-TEST-2: " << json;
-
-
     MyInterface *mi = qobject_cast<MyInterface *>(plugin);
 
     return mi;
