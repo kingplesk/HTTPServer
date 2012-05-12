@@ -43,8 +43,23 @@ void ClientHandler::sendComet(QString json)
 
             lastUpdated = QDateTime::currentDateTime();
             nextComet.lastUpdated = QDateTime::currentDateTime();
-            nextComet.lastMessageId =  messageId;
-            nextComet.http->sendReply(QByteArray().append(json));
+
+            //qDebug() << "lastMessageId:" << nextComet.lastMessageId <<  "messageId:" << messageId;
+
+            int idx = nextComet.lastMessageId;
+            ++idx;
+
+            //qDebug() << "lastMessageId:" << nextComet.lastMessageId <<  "messageId:" << messageId << "idx:" << idx;
+
+            QStringList messages = messageQueue_.mid(idx);
+
+            //qDebug() << "Messages mid:" << messages;
+
+            nextComet.lastMessageId = messageId;
+
+            //qDebug() << "LastMessagesId:" << nextComet.lastMessageId;
+
+            nextComet.http->sendReply(QByteArray().append("[").append(messages.join(", ")).append("]"));
         }
 
         nextComet.http = 0;
@@ -57,9 +72,39 @@ void ClientHandler::sendComet(QString json)
     checkState();
 }
 
+void ClientHandler::sendComet(comet& nextComet)
+{
+    int messageId = messageQueue_.count() - 1;
+    if (nextComet.http && nextComet.http->state() == QAbstractSocket::ConnectedState) {
+        //stop auto closing timer for current comet
+        if (nextComet.timer->isActive()) {
+            nextComet.timer->stop();
+        }
+
+        lastUpdated = QDateTime::currentDateTime();
+        nextComet.lastUpdated = QDateTime::currentDateTime();
+
+        int idx = nextComet.lastMessageId;
+        ++idx;
+
+        QStringList messages = messageQueue_.mid(idx);
+        nextComet.lastMessageId = messageId;
+        nextComet.http->sendReply(QByteArray().append("[").append(messages.join(", ")).append("]"));
+    }
+
+    nextComet.http = 0;
+    nextComet.timer = 0;
+    nextComet.tid = '-1';
+
+    qDebug() << uuid << "MessageQueue: " << messageQueue_;
+
+    checkState();
+}
+
+
 bool ClientHandler::cometsEmpty()
 {
-    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+    for(QMap<QString, comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
         comet& nextComet = it.value();
         if (nextComet.http) {
             return false;
@@ -96,14 +141,22 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
     //comet
     QString tid = http->request_->getTid();
 
-    comet newComet;
-    newComet.tid = tid;
-    newComet.http = http;
-    newComet.timer = timer;
-    newComet.lastMessageId = -1;
-    newComet.lastUpdated = QDateTime::currentDateTime();
+    if (!comets_.contains(tid)) {
+        comet newComet;
+        newComet.tid = tid;
+        newComet.lastMessageId = -1;
+        newComet.lastUpdated = QDateTime::currentDateTime();
 
-    comets_[tid] = newComet;
+        comets_[tid] = newComet;
+    }
+
+    comets_[tid].http = http;
+    comets_[tid].timer = timer;
+
+    if (comets_[tid].lastMessageId == -1 && messageQueue_.count() > 0) {
+        sendComet(comets_[tid]);
+    }
+
     qDebug() << uuid << 'Number of concurrent comets: ' << comets_.count();
 }
 
@@ -125,7 +178,7 @@ void ClientHandler::closeComet()
 
 comet& ClientHandler::getComet(QTimer * timer)
 {
-    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+    for(QMap<QString, comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
         comet& nextComet = it.value();
         if (nextComet.timer == timer) {
             return nextComet;
@@ -135,7 +188,7 @@ comet& ClientHandler::getComet(QTimer * timer)
 
 comet& ClientHandler::getComet(QString tid)
 {
-    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+    for(QMap<QString, comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
         comet& nextComet = it.value();
         if (nextComet.tid == tid) {
             return nextComet;
@@ -145,7 +198,7 @@ comet& ClientHandler::getComet(QString tid)
 
 comet& ClientHandler::getComet(Http * http)
 {
-    for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+    for(QMap<QString, comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
         comet& nextComet = it.value();
         if (nextComet.http == http) {
             return nextComet;

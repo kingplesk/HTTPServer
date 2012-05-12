@@ -319,12 +319,17 @@ var Comet = (function(Ajax, Util, Signal) {
             if (responseText && responseText !== "") {
                 var responseJson = JSON.parse(responseText);
 
-                //instance["test" + id] && instance["test" + id].emit("test" + id);
-                if (responseJson && responseJson[1].handler && responseJson[1].data &&
-                    instance.handlers && instance.handlers[responseJson[1].handler] &&
-                    instance.handlers[responseJson[1].handler].emit && Util.isFunction(instance.handlers[responseJson[1].handler].emit))
-                {
-                    instance.handlers[responseJson[1].handler].emit(responseJson[1].data);
+                if (Util.isArray(responseJson)) {
+                    for (var i = 0, ilen = responseJson.length, responseChunk; i < ilen; i++) {
+                        responseChunk = responseJson[i];
+                        //instance["test" + id] && instance["test" + id].emit("test" + id);
+                        if (responseChunk && responseChunk[1].handler && responseChunk[1].data &&
+                            instance.handlers && instance.handlers[responseChunk[1].handler] &&
+                            instance.handlers[responseChunk[1].handler].emit && Util.isFunction(instance.handlers[responseChunk[1].handler].emit))
+                        {
+                            instance.handlers[responseChunk[1].handler].emit(responseChunk[1].data);
+                        }
+                    }
                 }
             }
 

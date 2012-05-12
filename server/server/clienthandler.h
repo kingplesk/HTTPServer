@@ -4,7 +4,7 @@
 #include <QMap>
 #include <QTimer>
 #include <QObject>
-#include <QVector>
+#include <QStringList>
 #include <QDateTime>
 #include <QByteArray>
 #include <QPluginLoader>
@@ -17,7 +17,7 @@
 struct comet {
     Http * http;
     QTimer * timer;
-    qint64 lastMessageId;
+    int lastMessageId;
     QDateTime lastUpdated;
     QString tid;
 };
@@ -30,7 +30,7 @@ class ClientHandler : public QObject
         template<typename Func>
         void cometIterator(Func func)
         {
-            for(QMap<QString,comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
+            for(QMap<QString, comet>::iterator it = comets_.begin(); it != comets_.end(); ++it) {
                 comet& nextComet = it.value();
                 func(nextComet);
             }
@@ -38,6 +38,7 @@ class ClientHandler : public QObject
 
         ClientHandler(QObject * parent = 0);
         void sendComet(QString json);
+        void sendComet(comet& nextComet);
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
         void checkState();
@@ -60,7 +61,7 @@ class ClientHandler : public QObject
     private:
         QTimer * timer_;
         QMap<QString, comet> comets_;
-        QVector<QString> messageQueue_;
+        QStringList messageQueue_;
 };
 
 #endif // CLIENTHANDLER_H
