@@ -51,7 +51,7 @@ void Http::socketStateChanged(QAbstractSocket::SocketState socketState)
 
         state_ = QAbstractSocket::ClosingState;
 
-        //qDebug() << "stateChanged:" << socket_->state() << ":" << state_;
+        qDebug() << request_->getTid() << " stateChanged:" << socket_->state() << ":" << socketState << ":" << state_;
 
         deleteLater();
     }

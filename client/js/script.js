@@ -302,14 +302,21 @@ console.log("Comet");
 
 var Comet = (function(Ajax, Util, Signal) {
     var instance;
-    var isStarted = false;
+    var isRunning = false;
     var tid = (new Date()).getTime();
+    var receiverHandler = null;
 
     var newComet = function(sleep) {
         sleep = sleep || 0;
         setTimeout(function() {
             Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid, callback);
         }, sleep);
+    };
+
+    var receiver = function() {
+        if (!isRunning) {
+            start();
+        }
     };
 
     var callback = {
@@ -335,13 +342,20 @@ var Comet = (function(Ajax, Util, Signal) {
 
             newComet();
         },
-        error: function(statusCode) { console.log('Error: ' + statusCode); }
+        error: function(statusCode) {
+            isRunning = false;
+            console.log('Error: ' + statusCode);
+        }
     };
 
     var start = function(url) {
-        if (isStarted) return;
-        isStarted = true;
+        if (isRunning) return;
+        isRunning = true;
         newComet();
+
+        if (!receiverHandler) {
+            receiverHandler = window.setInterval(receiver, 2000);
+        }
     };
 
     // BEGIN: TestTimer for Signal implmentation

@@ -13,6 +13,8 @@ QString HttpRequest::getTid()
 {
     QRegExp rx("(.*)tid=([^&]*).*");
 
+    qDebug() << "HEADER:" << header_.path();
+
     if (rx.exactMatch(header_.path())) {
         return rx.cap(2);
     }

@@ -146,12 +146,27 @@ void ClientHandler::newComet(Http * http, QMap<QString, QPluginLoader *>& p)
         newComet.tid = tid;
         newComet.lastMessageId = -1;
         newComet.lastUpdated = QDateTime::currentDateTime();
+        newComet.http = 0;
+        newComet.timer = 0;
 
         comets_[tid] = newComet;
     }
 
+    if (comets_[tid].http) {
+        comets_[tid].http->deleteLater();
+        comets_[tid].http = 0;
+    }
+
+    if (comets_[tid].timer) {
+        if (comets_[tid].timer->isActive()) comets_[tid].timer->stop();
+        comets_[tid].timer->deleteLater();
+        comets_[tid].timer = 0;
+    }
+
     comets_[tid].http = http;
     comets_[tid].timer = timer;
+
+    qDebug() << "TID:" << tid;
 
     if (comets_[tid].lastMessageId == -1 && messageQueue_.count() > 0) {
         sendComet(comets_[tid]);
@@ -164,6 +179,8 @@ void ClientHandler::closeComet()
 {
     QTimer * timer = qobject_cast<QTimer *>(sender());
     comet& closingComet = getComet(timer);
+
+    qDebug() << "closingComet:" << closingComet.http->state();
     QString tid = closingComet.tid;
 
     qDebug() << uuid << "closeComet" << tid;
