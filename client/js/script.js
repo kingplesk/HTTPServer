@@ -199,6 +199,28 @@ var Util = (function() {
             }
 
             return clone;
+        },
+        "getCookie": function(name) {
+            var pattern = new RegExp("(.*[; ])?" + name + "=([^; ]*).*","i");
+            var matches = document.cookie.match(pattern);
+            if (matches && matches.length >=2) {
+                return matches[2];
+            }
+        },
+        "setCookie": function(name, value) {
+            //BEGIN deprecated
+            var pattern = new RegExp("(.*[; ])?(" + name + ")=([^; ]*)(.*)","i"), newCookie = "", currentCookie = document.cookie;
+            var matches = currentCookie.match(pattern);
+            if (matches && matches.length >=3) {
+                newCookie = currentCookie.replace(pattern, "$1$2=" + value + "$4");
+            }
+            else {
+                newCookie = name + "=" + value;
+            }
+            //END deprecated
+
+            newCookie = name + "=" + value;
+            document.cookie = newCookie;
         }
     };
 
@@ -354,7 +376,7 @@ var Comet = (function(Ajax, Util, Signal) {
         newComet();
 
         if (!receiverHandler) {
-            receiverHandler = window.setInterval(receiver, 2000);
+            receiverHandler = window.setInterval(receiver, 10000);
         }
     };
 
@@ -453,7 +475,7 @@ console.log("Selector")
 var Selector = (function(Util, Signal) {
     var selecting = false, start = { x: null, y: null },
         current = { x: null, y: null, w: null, h: null, t: null, l:null },
-        el = document, domRectangle, suffix = Util.getUniqueId().replace(/\./g, "-"),
+        el = document, domRectangle, suffix = Util.getUniqueId(),
         rectangleId = "selector-rectangle-" + suffix, prefixId = "selector-item-" + suffix + "-",
         signals = { checkIsSelected: new Signal(), start: new Signal(), stop: new Signal() };
 
@@ -739,7 +761,6 @@ var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, A
 console.log('ColorPicker')
 
 var ColorPicker = (function(Util, Signal) {
-
     var ul = document.createElement('ul'), dec2hex = ['00', '11', '22', '33', '44', '55', '66', '77', '88', '99', 'AA', 'BB', 'CC', 'DD', 'EE', 'FF'];
     Util.addClass(ul, 'ColorPicker');
 
@@ -767,38 +788,68 @@ var ColorPicker = (function(Util, Signal) {
     };
 })(Util, Signal);
 
+console.log('PaintPicker')
+
+var PaintPicker = (function(Util, Signal) {
+
+    var selectableClass = "PaintPickerItem", selectedClass = "selected", suffix = Util.getUniqueId(), prefixId = "paintPickerItem-" + suffix + "-";
+
+    function getIdx(id) {
+        return parseInt(id.substr(id.lastIndexOf("-") + 1), 10);
+    }
+
+    return function(el) {
+        var childNodes = el.childNodes,  selectables = [], selected = parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10);
+        for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
+            childNode = childNodes[i];
+            if (childNode.nodeType == 1 && childNode.className == selectableClass) {
+                childNode.id = prefixId + j;
+                selectables[j] = childNode;
+
+                if (selected == j) {
+                    Util.addClass(childNode, selectedClass);
+                }
+
+                j++;
+            }
+        }
+
+        this.onSelect = new Signal();
+
+        Util.connect('click', el, function(e, src) {
+            var id = getIdx(src.id);
+            if (!Util.hasClass(src, selectableClass)) return;
+
+            this.onSelect.emit(id, src);
+        }, this);
+
+
+    };
+})(Util, Signal);
+
 console.log('PluginPaint');
 
 var PluginPaint = (function(Selector, ColorPicker) {
     var colorPicker = new ColorPicker(Util.$id('colorPicker'));
+    var paintPicker = new PaintPicker(Util.$id('paintPicker'));
 
     return function(cometHandler) {
         this.color = null;
         this.selector = new Selector(Util.$id("selectRoot"));
 
-        Util.connect('click', Util.$id('resetBtn'), function(e) {
-            var returnVal = this.selector.reset();
-            console.log(returnVal);
+        paintPicker.onSelect.connect(function(sid, src) {
+            Util.setCookie("sid", "{" + sid + "}")
+            Ajax.send("http://test.localhost.lan:88/test", {
+                success: function(responseText) { location.href = "/" },
+                error: function(statusCode) { console.log('Failure: ' + statusCode); }
+            });
+
         }, this);
 
         colorPicker.onSelect.connect(function(color) {
             var returnVal = this.selector.commit();
             console.log(returnVal);
             this.color = color;
-            returnVal.params.push(this.color);
-
-            Ajax.send("http://test.localhost.lan:88/test?ajax", {
-                success: function(responseText) { this.selector.reset(); },
-                error: function(statusCode) { console.log('Failure: ' + statusCode); }
-            }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
-
-            console.log(returnVal);
-        }, this);
-
-        Util.connect('click', Util.$id('commit3Btn'), function(e) {
-            var returnVal = this.selector.commit();
-            console.log(returnVal);
-            this.color = Util.$id('color').value;
             returnVal.params.push(this.color);
 
             Ajax.send("http://test.localhost.lan:88/test?ajax", {
