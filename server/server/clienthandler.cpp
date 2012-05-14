@@ -264,7 +264,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QByteArray json = serializer.serialize(newVariantMap);
         //qDebug() << "JOSN-STRING-TEST-1: " << json;
 
-        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"));
+        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"), uuid);
 
         reply.append("[0, {\"handler\":\"" + handler + "\"}]");
     }

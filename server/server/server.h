@@ -32,6 +32,7 @@ class Server : public QObject
         void update();
         void newConnection();
         void broadcast(QString json);
+        void broadcast(QString json, QString channel);
         void deleteClientHandler(QString uuid);
 
     private:

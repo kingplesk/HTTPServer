@@ -80,7 +80,8 @@ void Server::handle()
 
         ch = new ClientHandler(this);
 
-        connect(ch, SIGNAL(broadcast(QString)), this, SLOT(broadcast(QString)));
+        //connect(ch, SIGNAL(broadcast(QString)), this, SLOT(broadcast(QString)));
+        connect(ch, SIGNAL(broadcast(QString,  QString)), this, SLOT(broadcast(QString, QString)));
         connect(ch, SIGNAL(deleteClientHandler(QString)), this, SLOT(deleteClientHandler(QString)));
 
         clients_[uuid] = ch;
@@ -127,6 +128,24 @@ void Server::broadcast(QString json)
     while (i.hasNext()) {
         i.next();
         i.value()->sendComet(json);
+    }
+
+    QDateTime after = QDateTime::currentDateTime();
+    qDebug("broadcast: %d", before.msecsTo(after));
+}
+
+void Server::broadcast(QString json, QString channel)
+{
+    qDebug() << "JSON:" << json << "CHANNEL:" << channel;
+
+    QDateTime before = QDateTime::currentDateTime();
+
+    QMutableMapIterator<QString, ClientHandler *> i(clients_);
+    while (i.hasNext()) {
+        i.next();
+        if (i.key() == channel) {
+            i.value()->sendComet(json);
+        }
     }
 
     QDateTime after = QDateTime::currentDateTime();

@@ -41,6 +41,9 @@ void Http::socketError(QAbstractSocket::SocketError socketError)
 
 QAbstractSocket::SocketState Http::state()
 {
+    if (!socket_->isValid()) {
+        state_ = QAbstractSocket::ClosingState;
+    }
     return state_;
 }
 
@@ -76,6 +79,9 @@ void Http::sendReply(QByteArray body)
     //qDebug() << "getResponse : " << response_;
 
     state_ = QAbstractSocket::ClosingState;
-    socket_->write(response_->getResponse().append(body));
+    qint64 returnVal = socket_->write(response_->getResponse().append(body));
+
+    qDebug() << "---- WriteState: " << returnVal;
+
     socket_->close();
 }
