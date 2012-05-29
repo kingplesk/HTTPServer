@@ -2,8 +2,9 @@ console.log("Util");
 
 var Util = (function() {
 
-    var eventWrapper = function(callback, context) {
+    var eventWrapper = function(callback, context, suppress) {
         context = context || null;
+        suppress = suppress !== false;
 
         return function(e) {
             var src;
@@ -11,18 +12,20 @@ var Util = (function() {
             e = e || window.event;
             src = e.target || e.srcElement;
 
-            if (typeof e.stopPropagation === "function") {
-                e.stopPropagation();
-            }
-            if (typeof e.cancelBubble !== "undefined") {
-                e.cancelBubble = true;
-            }
+            if (suppress) {
+                if (typeof e.stopPropagation === "function") {
+                    e.stopPropagation();
+                }
+                if (typeof e.cancelBubble !== "undefined") {
+                    e.cancelBubble = true;
+                }
 
-            if (typeof e.preventDefault === "function") {
-                e.preventDefault();
-            }
-            if (typeof e.returnValue !== "undefined") {
-                e.returnValue = false;
+                if (typeof e.preventDefault === "function") {
+                    e.preventDefault();
+                }
+                if (typeof e.returnValue !== "undefined") {
+                    e.returnValue = false;
+                }
             }
 
             callback.apply(context, [e, src]);
@@ -165,14 +168,14 @@ var Util = (function() {
         "isElement": function(value) {
             return /^\[object HTML.*\]$/i.test(Object.prototype.toString.call(value));
         },
-        "connect": function(event, el, callback, context) {
+        "connect": function(event, el, callback, context, suppress) {
             context = context || null;
 
             if (el.addEventListener){
-                el.addEventListener(event, eventWrapper(callback, context), false);
+                el.addEventListener(event, eventWrapper(callback, context, suppress), false);
             }
             else if (el.attachEvent){
-                el.attachEvent("on" + event, eventWrapper(callback, context));
+                el.attachEvent("on" + event, eventWrapper(callback, context, suppress));
             }
         },
         "disconnect": function(event, el, callback, context) {
@@ -800,6 +803,10 @@ var PaintPicker = (function(Util, Signal) {
 
     return function(el) {
         var childNodes = el.childNodes,  selectables = [], selected = parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10);
+
+        this.onSelect = new Signal();
+        this.onNewItem = new Signal();
+
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
             if (childNode.nodeType == 1 && childNode.className == selectableClass) {
@@ -810,14 +817,24 @@ var PaintPicker = (function(Util, Signal) {
                     Util.addClass(childNode, selectedClass);
                 }
 
+                if (j === 0) {
+                    Util.connect('keypress', el, function(e, src) {
+                        var keyCode = e.which;
+
+                        if (keyCode === 13) {
+                            console.log("keyCode: return; new paintmap", src);
+                            this.onNewItem.emit(src.value);
+                        }
+                    }, this, false);
+                }
+
                 j++;
             }
         }
 
-        this.onSelect = new Signal();
-
         Util.connect('click', el, function(e, src) {
             var id = getIdx(src.id);
+            if (id === 0) return;
             if (!Util.hasClass(src, selectableClass)) return;
 
             this.onSelect.emit(id, src);
@@ -844,6 +861,15 @@ var PluginPaint = (function(Selector, ColorPicker) {
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
             });
 
+        }, this);
+
+        paintPicker.onNewItem.connect(function(name) {
+            Util.setCookie("sid", "")
+            /*Ajax.send("http://test.localhost.lan:88/test", {
+                success: function(responseText) { location.href = "/" },
+                error: function(statusCode) { console.log('Failure: ' + statusCode); }
+            });*/
+            console.log(name, document.cookie);
         }, this);
 
         colorPicker.onSelect.connect(function(color) {
