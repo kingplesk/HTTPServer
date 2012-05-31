@@ -224,6 +224,31 @@ var Util = (function() {
 
             newCookie = name + "=" + value;
             document.cookie = newCookie;
+        },
+        "fx": {
+            "animate": function(el, inlineStyle, begin, end, duration, onEnd) {
+                var start = (new Date()).getTime(), diff, that = this, pos = begin, now, timer = null;
+                onEnd = onEnd || function() {};
+
+                timer = window.setInterval(function() {
+                    now = (new Date()).getTime() - start;
+                    pos = that.easeOutExpo(null, now, begin, end, duration);
+
+                    el.style[inlineStyle] = parseInt(pos, 10) + "px";
+
+                    if (pos >= end || now >= duration) {
+                        window.clearInterval(timer);
+                        timer = null;
+
+                        el.style[inlineStyle] = parseInt(end, 10) + "px";
+                        onEnd(el);
+                    }
+                }, 1);
+            },
+            // t: current time, b: begInnIng value, c: change In value, d: duration
+            "easeOutExpo": function (x, t, b, c, d) {
+              return (t==d) ? b+c : c * (-Math.pow(2, -10 * t/d) + 1) + b;
+            }
         }
     };
 
@@ -818,14 +843,38 @@ var PaintPicker = (function(Util, Signal) {
                 }
 
                 if (j === 0) {
-                    Util.connect('keypress', el, function(e, src) {
+                    var input = Util.$id("PaintPickerItemInput");
+                    Util.connect('keypress', input, function(e, src) {
                         var keyCode = e.which;
 
                         if (keyCode === 13) {
                             console.log("keyCode: return; new paintmap", src);
-                            this.onNewItem.emit(src.value);
+                            var value = src.value.replace(/\s+/g, "");
+                            if (value == "new" || value == "") return;
+                            this.onNewItem.emit(src.value, src.parentNode);
+
+                            src.value = "new";
+                            src.onblur(e);
                         }
                     }, this, false);
+
+                    input.onfocus = function(e) {
+                        var src = e.target;
+                        if (src.value == "new") {
+                            src.value = "";
+                        }
+                    };
+
+                    input.onblur = function(e) {
+                        var src = e.target, value = src.value + "";
+                        if (/^\s*$/g.test(value)) {
+                            src.value = "new";
+                        }
+
+                        e.returnvalue = true;
+                    };
+
+                    input.id = "paintPickerItemInput-" + suffix;
                 }
 
                 j++;
@@ -863,13 +912,49 @@ var PluginPaint = (function(Selector, ColorPicker) {
 
         }, this);
 
-        paintPicker.onNewItem.connect(function(name) {
-            Util.setCookie("sid", "")
-            /*Ajax.send("http://test.localhost.lan:88/test", {
-                success: function(responseText) { location.href = "/" },
-                error: function(statusCode) { console.log('Failure: ' + statusCode); }
-            });*/
-            console.log(name, document.cookie);
+        paintPicker.onNewItem.connect(function(name, src) {
+            var position = Util.getOffset();
+            var parent = src.parentNode;
+            var ghost = src.cloneNode(false);
+            var id = ghost.id;
+            var duration = 1500;
+
+            ghost.innerHTML = name;
+            ghost.style.opacity = '0.5';
+            ghost.style.position = 'absolute';
+            ghost.id = id.substr(0, id.length-1) + Util.getCookie("sid");
+
+            Util.addClass(ghost, "PaintPickerGhost");
+
+            var next = src.nextSibling;
+            while (next && next.nodeType !== 1) {
+                next = next.nextSibling;
+            }
+
+            if (next && next.nodeType === 1) {
+                parent.insertBefore(ghost, next);
+                Util.fx.animate(next, "marginLeft", 0, 94, duration, function(el) {
+                    el.style.marginLeft = "";
+                });
+            }
+            else {
+                parent.appendChild(ghost);
+            }
+
+            Util.fx.animate(ghost, "left", position.l, position.l + 134, duration, function(el) {
+                el.style.position = "relative";
+                el.style.opacity = "";
+                el.style.left = "";
+
+                Util.removeClass(ghost, "PaintPickerGhost");
+/*
+                Ajax.send("http://test.localhost.lan:88/test", {
+                    success: function(responseText) { location.href = "/" },
+                    error: function(statusCode) { console.log('Failure: ' + statusCode); }
+                });*/
+            });
+
+            console.log(document.cookie);
         }, this);
 
         colorPicker.onSelect.connect(function(color) {
