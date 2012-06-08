@@ -236,7 +236,7 @@ var Util = (function() {
 
                     el.style[inlineStyle] = parseInt(pos, 10) + "px";
 
-                    if (pos >= end || now >= duration) {
+                    if (now >= duration) {
                         window.clearInterval(timer);
                         timer = null;
 
@@ -851,10 +851,11 @@ var PaintPicker = (function(Util, Signal) {
                             console.log("keyCode: return; new paintmap", src);
                             var value = src.value.replace(/\s+/g, "");
                             if (value == "new" || value == "") return;
+
                             this.onNewItem.emit(src.value, src.parentNode);
 
+                            src.blur(e);
                             src.value = "new";
-                            src.onblur(e);
                         }
                     }, this, false);
 
@@ -926,6 +927,10 @@ var PluginPaint = (function(Selector, ColorPicker) {
 
             Util.addClass(ghost, "PaintPickerGhost");
 
+            console.log(Util.getOffset(parent));
+
+            parent.style.width = parent.clientWidth + 94 + "px";
+
             var next = src.nextSibling;
             while (next && next.nodeType !== 1) {
                 next = next.nextSibling;
@@ -933,15 +938,27 @@ var PluginPaint = (function(Selector, ColorPicker) {
 
             if (next && next.nodeType === 1) {
                 parent.insertBefore(ghost, next);
+                ghost.style.left = 94 + "px";
                 Util.fx.animate(next, "marginLeft", 0, 94, duration, function(el) {
                     el.style.marginLeft = "";
+
+                    ghost.style.position = "relative";
+                    ghost.style.opacity = "";
+                    ghost.style.left = "";
+
+                    Util.removeClass(ghost, "PaintPickerGhost");
                 });
             }
             else {
                 parent.appendChild(ghost);
+
+                ghost.style.position = "relative";
+                ghost.style.opacity = "";
+                ghost.style.left = "";
             }
 
-            Util.fx.animate(ghost, "left", position.l, position.l + 134, duration, function(el) {
+            /*
+            Util.fx.animate(ghost, "left", -94, 0, duration, function(el) {
                 el.style.position = "relative";
                 el.style.opacity = "";
                 el.style.left = "";
@@ -952,7 +969,7 @@ var PluginPaint = (function(Selector, ColorPicker) {
                     success: function(responseText) { location.href = "/" },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
                 });*/
-            });
+            //});
 
             console.log(document.cookie);
         }, this);

@@ -31,9 +31,10 @@
 <div role="main" class="main">
 
 <style type="text/css">
-    ul.PaintPicker { white-space: nowrap; position:relative; width: 100%; overflow-x: auto; height: 130px; list-style: none none outside; clear: both; margin: 0; padding: 0; color: #5e5e5e; background-color: #fff; border:none; }
+    div.PaintPickerScrollbar { width: 500px; overflow: auto; padding:0; position:relative; }
+    ul.PaintPicker { white-space: nowrap; position:relative; width: 94px; overflow: hidden; height: 95px; list-style: none none outside; clear: both; margin: 0; padding: 0; color: #5e5e5e; background-color: #fff; border:none; }
     li.PaintPickerItem { float: left; text-align: center; width: 80px; height: 30px; margin: 0 10px 0 0; padding: 25px 0; border: 2px solid #ddd; -webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px; background-color: none; }
-    li.PaintPickerItem:first-child { margin-right: 50px; }
+    li.PaintPickerItem:first-child { background-color: white; }
     li.PaintPickerItem:hover { background-color: #eee; }
     li.PaintPickerGhost:hover { background-color: transparent; }
     li.PaintPickerItem input { width: 50px; border:1px solid transparent; background-color: transparent; }
@@ -41,12 +42,11 @@
     li.selected { background-color: #bdbdbd; }
 </style>
 
-<ul id="paintPicker" class="PaintPicker">
-    <li class="PaintPickerItem"><input type="text" value="new" id="PaintPickerItemInput" autocomplete="off"/></li>
-    <!--<li class="PaintPickerItem">Paint 2</li>
-    <li class="PaintPickerItem">Paint 3</li>
-    <li class="PaintPickerItem">Paint 4</li>-->
-</ul>
+<div class="PaintPickerScrollbar">
+    <ul id="paintPicker" class="PaintPicker">
+        <li class="PaintPickerItem"><input type="text" value="new" id="PaintPickerItemInput" autocomplete="off"/></li>
+    </ul>
+</div>
 
 <style type="text/css">
     div.ColorPicker { width: 320px; float: left; margin: 50px 0 0 0;}
