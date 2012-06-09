@@ -920,6 +920,15 @@ var PluginPaint = (function(Selector, ColorPicker) {
             var id = ghost.id;
             var duration = 1500;
 
+            function newChannel(id) {
+                Util.setCookie("sid", id);
+
+                Ajax.send("http://test.localhost.lan:88/test", {
+                    success: function(responseText) { location.href = "/" },
+                    error: function(statusCode) { console.log('Failure: ' + statusCode); }
+                });
+            }
+
             ghost.innerHTML = name;
             ghost.style.opacity = '0.5';
             ghost.style.position = 'absolute';
@@ -947,6 +956,7 @@ var PluginPaint = (function(Selector, ColorPicker) {
                     ghost.style.left = "";
 
                     Util.removeClass(ghost, "PaintPickerGhost");
+                    newChannel();
                 });
             }
             else {
@@ -955,21 +965,9 @@ var PluginPaint = (function(Selector, ColorPicker) {
                 ghost.style.position = "relative";
                 ghost.style.opacity = "";
                 ghost.style.left = "";
+
+                newChannel();
             }
-
-            /*
-            Util.fx.animate(ghost, "left", -94, 0, duration, function(el) {
-                el.style.position = "relative";
-                el.style.opacity = "";
-                el.style.left = "";
-
-                Util.removeClass(ghost, "PaintPickerGhost");
-/*
-                Ajax.send("http://test.localhost.lan:88/test", {
-                    success: function(responseText) { location.href = "/" },
-                    error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                });*/
-            //});
 
             console.log(document.cookie);
         }, this);
