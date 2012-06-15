@@ -382,9 +382,9 @@ var Comet = (function(Ajax, Util, Signal) {
                         //instance["test" + id] && instance["test" + id].emit("test" + id);
                         if (responseChunk && responseChunk[1].handler && responseChunk[1].data &&
                             instance.handlers && instance.handlers[responseChunk[1].handler] &&
-                            instance.handlers[responseChunk[1].handler].emit && Util.isFunction(instance.handlers[responseChunk[1].handler].emit))
+                            instance.handlers[responseChunk[1].handler] && instance.handlers[responseChunk[1].handler][responseChunk[1].signal] && instance.handlers[responseChunk[1].handler][responseChunk[1].signal].emit && Util.isFunction(instance.handlers[responseChunk[1].handler][responseChunk[1].signal].emit))
                         {
-                            instance.handlers[responseChunk[1].handler].emit(responseChunk[1].data);
+                            instance.handlers[responseChunk[1].handler][responseChunk[1].signal].emit(responseChunk[1].data);
                         }
                     }
                 }
@@ -435,11 +435,19 @@ var Comet = (function(Ajax, Util, Signal) {
 
         this.start = start;
         this.handlers = {};
-        this.registerPlugins = function(pluginHandlers) {
-            for (var i = 0, ilen = pluginHandlers.length; i < ilen; i++) {
-                this.handlers[pluginHandlers[i]] = new Signal();
+
+        this.getHandlers = function(handler, signals) {
+            this.handlers[handler] = {};
+
+            for (var i in signals) {
+                if (signals.hasOwnProperty(i)) {
+                    this.handlers[handler][i] = new Signal();
+                }
             }
-        };
+
+            return this.handlers[handler];
+        }
+
 
 /*
         this.test0 = new Signal();
@@ -756,35 +764,27 @@ var Selector = (function(Util, Signal) {
 })(Util, Signal);
 
 
-
 var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, Ajax) {
     var plugins = {};
 
-    return {
-        register: function(handler, plugin) {
-            if (!plugins[handler]) {
-                plugins[handler] = plugin;
+    PluginManager = function PluginManager() {
+        for (var handler in plugins) {
+            if (plugins.hasOwnProperty(handler)) {
+                console.log(handler, plugins[handler], plugins[handler].signals);
+                plugins[handler] = new plugins[handler](Comet.getHandlers(handler, plugins[handler].signals));
             }
-        },
-        initPlugins: function() {
-            for (var i in plugins) {
-                if (plugins.hasOwnProperty(i)) {
-                    plugins[i] = new plugins[i](Comet.handlers[i]);
-                }
-            }
-        },
-        getHandlerNames: function() {
-            var handlerNames = [];
-            for (var i in plugins) {
-                if (plugins.hasOwnProperty(i)) {
-                    handlerNames.push(i);
-                }
-            }
-            return handlerNames;
         }
-
     }
+
+    PluginManager.register = function(plugin) {
+        if (!plugins[plugin.handler]) {
+            plugins[plugin.handler] = plugin;
+        }
+    };
+
+    return PluginManager;
 })(Comet, TrayIcon,  /*, Clipboard, Widget, */ Util, Ajax);
+
 
 console.log('ColorPicker')
 
@@ -896,11 +896,11 @@ var PaintPicker = (function(Util, Signal) {
 
 console.log('PluginPaint');
 
-var PluginPaint = (function(Selector, ColorPicker) {
+var PluginPaint = (function(Signal, Selector, ColorPicker) {
     var colorPicker = new ColorPicker(Util.$id('colorPicker'));
     var paintPicker = new PaintPicker(Util.$id('paintPicker'));
 
-    return function(cometHandler) {
+    PluginPaint = function PluginPaint(cometHandler) {
         this.color = null;
         this.selector = new Selector(Util.$id("selectRoot"));
 
@@ -921,12 +921,18 @@ var PluginPaint = (function(Selector, ColorPicker) {
             var duration = 1500;
 
             function newChannel(id) {
-                Util.setCookie("sid", id);
+                Util.setCookie("sid", "");
 
                 Ajax.send("http://test.localhost.lan:88/test", {
                     success: function(responseText) { location.href = "/" },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
                 });
+
+
+                Ajax.send("http://test.localhost.lan:88/test?ajax", {
+                    success: function(responseText) { Util.setCookie("sid", ""); },
+                    error: function(statusCode) { console.log('Failure: ' + statusCode); }
+                }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
             }
 
             ghost.innerHTML = name;
@@ -981,7 +987,7 @@ var PluginPaint = (function(Selector, ColorPicker) {
             Ajax.send("http://test.localhost.lan:88/test?ajax", {
                 success: function(responseText) { this.selector.reset(); },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
-            }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
+            }, null, JSON.stringify({ handler: 'paint', signal: 'painted', data: returnVal }), this);
 
             console.log(returnVal);
         }, this);
@@ -997,16 +1003,25 @@ var PluginPaint = (function(Selector, ColorPicker) {
             }, this.color);
         };
 
-        cometHandler.connect(trayIconContent);
-        cometHandler.connect(cometCallback, this);
+        cometHandler.painted.connect(trayIconContent);
+        cometHandler.painted.connect(cometCallback, this);
 
         //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
     };
-})(Selector, ColorPicker);
 
-PluginManager.register("paint", PluginPaint);
-Comet.registerPlugins(PluginManager.getHandlerNames());
-PluginManager.initPlugins();
+    PluginPaint.signals = {
+        painted : new Signal(),
+        newItem : new Signal()
+    };
+
+    PluginPaint.handler = "paint";
+
+    return PluginPaint;
+})(Signal, Selector, ColorPicker);
+
+
+PluginManager.register(PluginPaint);
+var plugins = new PluginManager();
 
 
 //var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {

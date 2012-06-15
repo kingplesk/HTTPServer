@@ -248,6 +248,10 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
     if (variantMap.contains("handler")) {
         handler = variantMap["handler"].toString();
     }
+    QString signal;
+    if (variantMap.contains("signal")) {
+        signal = variantMap["signal"].toString();
+    }
 
     QVariantMap variantData = variantMap["data"].toMap();
 
@@ -259,14 +263,17 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         //convert qvariantmap into object
         QJson::QObjectHelper::qvariant2qobject(variantData, object);
         //convert object to json
+
+        //object->process();
+
         QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
         QJson::Serializer serializer;
         QByteArray json = serializer.serialize(newVariantMap);
         //qDebug() << "JOSN-STRING-TEST-1: " << json;
 
-        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"data\": " + QString().append(json) + "}]"), uuid);
+        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid);
 
-        reply.append("[0, {\"handler\":\"" + handler + "\"}]");
+        reply.append("[0, {\"handler\":\"" + handler + "\", \"signal\": \"" + signal + "\",}]");
     }
     else {
         reply.append("[1, {\"handler\":\"nono-plugin\"}]");
