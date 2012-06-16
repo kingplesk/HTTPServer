@@ -910,7 +910,6 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
                 success: function(responseText) { location.href = "/" },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
             });
-
         }, this);
 
         paintPicker.onNewItem.connect(function(name, src) {
@@ -923,16 +922,10 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             function newChannel(id) {
                 Util.setCookie("sid", "");
 
-                Ajax.send("http://test.localhost.lan:88/test", {
-                    success: function(responseText) { location.href = "/" },
-                    error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                });
-
-
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
-                    success: function(responseText) { Util.setCookie("sid", ""); },
+                    success: function(responseText) { },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                }, null, JSON.stringify({ handler: 'paint', data: returnVal }), this);
+                }, null, JSON.stringify({ handler: 'paint', signal: 'newItem', data: { name: name } }), this);
             }
 
             ghost.innerHTML = name;
