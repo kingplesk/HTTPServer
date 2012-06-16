@@ -21,6 +21,7 @@ class Paint : public QObject, public MyInterface
     Q_INTERFACES(MyInterface)
 
 public:
+    Paint(QObject * parent = 0);
     virtual QString getString();
 
     QStringList items() const;
@@ -31,6 +32,12 @@ public:
 
     QStringList channels() const;
     void addChannel(const QStringList& channel);
+
+signals:
+    void newItem();
+
+public slots:
+    void finishedNewItem();
 
 private:
     QStringList m_items;

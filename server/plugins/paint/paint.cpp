@@ -1,5 +1,11 @@
 #include "paint.h"
 
+Paint::Paint(QObject * parent) :
+    QObject(parent)
+{
+    connect(this, SIGNAL(newItem()), SLOT(finishedNewItem()));
+}
+
 // paint.cpp
 QString Paint::getString()
 {
@@ -42,6 +48,11 @@ void Paint::setParams(const QStringList &params)
 void Paint::addChannel(const QStringList &channel)
 {
     m_channels << channel;
+}
+
+void Paint::finishedNewItem()
+{
+    qDebug() << "finishedNewItem";
 }
 
 

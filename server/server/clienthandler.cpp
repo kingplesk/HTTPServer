@@ -265,6 +265,8 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         //convert object to json
 
         //object->process();
+        if (signal.contains("newItem"))
+            QMetaObject::invokeMethod(object, "newItem", Qt::DirectConnection);
 
         QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
         QJson::Serializer serializer;
