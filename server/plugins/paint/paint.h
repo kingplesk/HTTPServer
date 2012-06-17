@@ -33,11 +33,9 @@ public:
     QStringList channels() const;
     void addChannel(const QStringList& channel);
 
-signals:
-    void newItem();
-
 public slots:
-    void finishedNewItem();
+    QString painted();
+    QString newItem();
 
 private:
     QStringList m_items;

@@ -264,9 +264,18 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QJson::QObjectHelper::qvariant2qobject(variantData, object);
         //convert object to json
 
+
+
         //object->process();
-        if (signal.contains("newItem"))
-            QMetaObject::invokeMethod(object, "newItem", Qt::DirectConnection);
+        std::string std_signal = signal.toStdString();
+        char* cstr = new char [std_signal.size()+1];
+        strcpy(cstr, std_signal.c_str());
+
+        QString retVal;
+        QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QString, retVal));
+        qDebug() << retVal;
+
+
 
         QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
         QJson::Serializer serializer;

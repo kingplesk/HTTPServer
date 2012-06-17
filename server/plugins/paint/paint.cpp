@@ -3,7 +3,6 @@
 Paint::Paint(QObject * parent) :
     QObject(parent)
 {
-    connect(this, SIGNAL(newItem()), SLOT(finishedNewItem()));
 }
 
 // paint.cpp
@@ -50,11 +49,17 @@ void Paint::addChannel(const QStringList &channel)
     m_channels << channel;
 }
 
-void Paint::finishedNewItem()
+QString Paint::painted()
 {
-    qDebug() << "finishedNewItem";
+    qDebug() << "painted";
+    return QString("painted ReturnValue");
 }
 
+QString Paint::newItem()
+{
+    qDebug() << "newItem";
+    return QString("newItem ReturnValue");
+}
 
 // export the plugin
 // the TARGET should be "paint" also
