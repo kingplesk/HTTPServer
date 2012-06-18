@@ -7,6 +7,7 @@
 #include <QObject>
 
 #include "paint.h"
+#include "painted.h"
 #include "server/myinterface.h"
 
 class Paint : public QObject, public MyInterface
@@ -34,13 +35,15 @@ public:
     void addChannel(const QStringList& channel);
 
 public slots:
-    QString painted();
-    QString newItem();
+    QObject * painted();
+    QObject * newItem();
+    QObject * newTest();
 
 private:
     QStringList m_items;
     QStringList m_params;
     QStringList m_channels;
+    //Painted * painted_;
 };
 
 #endif // PAINT_H

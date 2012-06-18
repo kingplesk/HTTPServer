@@ -49,17 +49,35 @@ void Paint::addChannel(const QStringList &channel)
     m_channels << channel;
 }
 
-QString Paint::painted()
+QObject * Paint::painted()
 {
     qDebug() << "painted";
-    return QString("painted ReturnValue");
+    //return QString("painted ReturnValue");
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return object;
 }
 
-QString Paint::newItem()
+QObject * Paint::newItem()
 {
     qDebug() << "newItem";
-    return QString("newItem ReturnValue");
+    //return QString("newItem ReturnValue");
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return object;
 }
+
+QObject * Paint::newTest()
+{
+    qDebug() << "QObject * Paint::newTest()";
+
+    QObject * object = dynamic_cast<QObject *>(new Painted());
+
+    return object;
+}
+
 
 // export the plugin
 // the TARGET should be "paint" also

@@ -271,13 +271,24 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         char* cstr = new char [std_signal.size()+1];
         strcpy(cstr, std_signal.c_str());
 
-        QString retVal;
-        QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QString, retVal));
-        qDebug() << retVal;
+        qDebug() << signal;
+        qDebug() << cstr;
+
+/*
+        QObject * pointer;
+        QGenericReturnArgument returnArg("QObject*", &pointer);
+        QMetaObject::invokeMethod(object, "newTest", returnArg);
+*/
+
+        QObject * retVal;
+        qDebug() << QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QObject *, retVal));
+        //qDebug() << retVal;
+
+        qDebug() << "retVal";
 
 
 
-        QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(object);
+        QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
         QJson::Serializer serializer;
         QByteArray json = serializer.serialize(newVariantMap);
         //qDebug() << "JOSN-STRING-TEST-1: " << json;
