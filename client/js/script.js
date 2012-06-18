@@ -925,7 +925,7 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
                     success: function(responseText) { },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                }, null, JSON.stringify({ handler: 'paint', signal: 'newItem', data: { name: name } }), this);
+                }, null, JSON.stringify({ handler: 'paint', signal: 'newItem', data: { channels: name } }), this);
             }
 
             ghost.innerHTML = name;
