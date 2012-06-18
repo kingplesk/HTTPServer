@@ -376,6 +376,11 @@ Ajax.send("http://test.localhost.lan:88/test", {
     error: function(statusCode) { console.log('Failure: ' + statusCode); }
 });
 
+Ajax.send("http://test.localhost.lan:88/test?ajax", {
+    success: function(responseText) { console.log("newTest", arguments); },
+    error: function(statusCode) { console.log('Failure: ' + statusCode); }
+}, null, JSON.stringify({ handler: 'paint', signal: 'newTest', data: [] }), this);
+
 </script>
 
 </body>
