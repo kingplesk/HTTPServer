@@ -883,11 +883,11 @@ var PaintPicker = (function(Util, Signal) {
         }
 
         Util.connect('click', el, function(e, src) {
-            var id = getIdx(src.id);
-            if (id === 0) return;
+            var idx = getIdx(src.id);
+            if (idx === 0) return;
             if (!Util.hasClass(src, selectableClass)) return;
 
-            this.onSelect.emit(id, src);
+            this.onSelect.emit(idx, src);
         }, this);
 
 
@@ -904,8 +904,9 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
         this.color = null;
         this.selector = new Selector(Util.$id("selectRoot"));
 
-        paintPicker.onSelect.connect(function(sid, src) {
-            Util.setCookie("sid", "{" + sid + "}")
+        paintPicker.onSelect.connect(function(idx, src) {
+            Util.setCookie("sid", src.getAttribute("data-cid"));
+
             Ajax.send("http://test.localhost.lan:88/test", {
                 success: function(responseText) { location.href = "/" },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
@@ -922,16 +923,23 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             function newChannel(id) {
                 Util.setCookie("sid", "");
 
+                var maps = {};
+                maps[Util.getUniqueId()] = name;
+
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
-                    success: function(responseText) { },
+                    success: function(responseText) {
+                        ghost.setAttribute("data-cid", Util.getCookie("sid"));
+                    },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                }, null, JSON.stringify({ handler: 'paint', signal: 'newItem', data: { channels: name } }), this);
+                }, null, JSON.stringify({ handler: 'paint', signal: 'newMap', data: { 'maps': maps } }), this);
             }
 
+            var nextId = parent.childNodes.length;
             ghost.innerHTML = name;
             ghost.style.opacity = '0.5';
             ghost.style.position = 'absolute';
-            ghost.id = id.substr(0, id.length-1) + Util.getCookie("sid");
+            ghost.id = id.substr(0, id.lastIndexOf("-")) + "-" + nextId;
+            //ghost.setAttribute("data-cid", Util.getCookie("sid"));
 
             Util.addClass(ghost, "PaintPickerGhost");
 

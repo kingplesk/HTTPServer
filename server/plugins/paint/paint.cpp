@@ -34,6 +34,11 @@ QStringList Paint::channels() const
     return m_channels;
 }
 
+QVariantMap Paint::maps() const
+{
+    return m_maps;
+}
+
 void Paint::setItems(const QStringList &items)
 {
     m_items = items;
@@ -47,6 +52,15 @@ void Paint::setParams(const QStringList &params)
 void Paint::addChannel(const QStringList &channel)
 {
     m_channels << channel;
+}
+
+void Paint::setMap(const QVariantMap &variant)
+{
+    QVariantMap::const_iterator i = variant.constBegin();
+
+    qDebug() << "setMap data:" << variant;
+
+    m_maps.insert(i.key(), i.value());
 }
 
 QObject * Paint::painted()
@@ -74,6 +88,15 @@ QObject * Paint::newTest()
     qDebug() << "QObject * Paint::newTest()";
 
     QObject * object = dynamic_cast<QObject *>(new Painted());
+
+    return object;
+}
+
+QObject * Paint::newMap()
+{
+    qDebug() << "QObject * Paint::setMap()";
+
+    QObject * object = dynamic_cast<QObject *>(this);
 
     return object;
 }
