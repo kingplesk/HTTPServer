@@ -279,19 +279,21 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QGenericReturnArgument returnArg("QObject*", &pointer);
         QMetaObject::invokeMethod(object, "newTest", returnArg);
 */
-
+        QByteArray json;
         QObject * retVal;
-        qDebug() << QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QObject *, retVal));
-        //qDebug() << retVal;
+        if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QObject *, retVal))) {
+            //qDebug() << retVal;
 
-        qDebug() << "retVal";
+            qDebug() << "retVal";
 
-
-
-        QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
-        QJson::Serializer serializer;
-        QByteArray json = serializer.serialize(newVariantMap);
-        //qDebug() << "JOSN-STRING-TEST-1: " << json;
+            QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
+            QJson::Serializer serializer;
+            json = serializer.serialize(newVariantMap);
+            //qDebug() << "JOSN-STRING-TEST-1: " << json;
+        }
+        else {
+            json.append("[]");
+        }
 
         emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid);
 

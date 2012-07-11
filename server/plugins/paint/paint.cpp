@@ -101,6 +101,15 @@ QObject * Paint::newMap()
     return object;
 }
 
+QObject * Paint::init()
+{
+    qDebug() << "QObject * Paint::init()";
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return object;
+}
+
 
 // export the plugin
 // the TARGET should be "paint" also

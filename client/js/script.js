@@ -770,7 +770,7 @@ var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, A
     PluginManager = function PluginManager() {
         for (var handler in plugins) {
             if (plugins.hasOwnProperty(handler)) {
-                console.log(handler, plugins[handler], plugins[handler].signals);
+                //console.log(handler, plugins[handler], plugins[handler].signals);
                 plugins[handler] = new plugins[handler](Comet.getHandlers(handler, plugins[handler].signals));
             }
         }
@@ -827,10 +827,28 @@ var PaintPicker = (function(Util, Signal) {
     }
 
     return function(el) {
-        var childNodes = el.childNodes,  selectables = [], selected = parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10);
+        var childNodes = el.childNodes,  selectables = [], selected = parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10), inputEl;
 
         this.onSelect = new Signal();
         this.onNewItem = new Signal();
+
+        this.addNewItem = function(sid, name) {
+            console.log(sid, name);
+
+            var parent = el;
+            var ghost = inputEl.parentNode.cloneNode(false);
+            var id = ghost.id;
+
+            var nextId = childNodes.length;
+            ghost.innerHTML = name;
+            ghost.id = id.substr(0, id.lastIndexOf("-")) + "-" + nextId;
+            ghost.setAttribute("data-cid", sid);
+
+            parent.style.width = parent.clientWidth + 94 + "px";
+            parent.appendChild(ghost);
+
+            ghost.style.position = "relative";
+        }
 
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
@@ -876,6 +894,7 @@ var PaintPicker = (function(Util, Signal) {
                     };
 
                     input.id = "paintPickerItemInput-" + suffix;
+                    inputEl = input;
                 }
 
                 j++;
@@ -908,7 +927,7 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             Util.setCookie("sid", src.getAttribute("data-cid"));
 
             Ajax.send("http://test.localhost.lan:88/test", {
-                success: function(responseText) { location.href = "/" },
+                success: function(responseText) { location.href = "/"; },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
             });
         }, this);
@@ -929,6 +948,7 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
                     success: function(responseText) {
                         ghost.setAttribute("data-cid", Util.getCookie("sid"));
+                        location.href = "/";
                     },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
                 }, null, JSON.stringify({ handler: 'paint', signal: 'newMap', data: { 'maps': maps } }), this);
@@ -1004,15 +1024,33 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             }, this.color);
         };
 
+        var init = function(data) {
+            if (data.maps) {
+                for (var i in data.maps) {
+                    paintPicker.addNewItem(i, data.maps[i]);
+                }
+            }
+        }
+
         cometHandler.painted.connect(trayIconContent);
         cometHandler.painted.connect(cometCallback, this);
+
+        cometHandler.newMap.connect(function() { console.log("newMapHandler") }, this);
+
+        cometHandler.init.connect(init);
+
+        Ajax.send("http://test.localhost.lan:88/test?ajax", {
+            success: function(responseText) { console.log("initPaintHandler Ajax", arguments); },
+            error: function(statusCode) { console.log('Failure: ' + statusCode); }
+        }, null, JSON.stringify({ handler: 'paint', signal: 'init' }), this);
 
         //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
     };
 
     PluginPaint.signals = {
         painted : new Signal(),
-        newItem : new Signal()
+        newMap : new Signal(),
+        init : new Signal(),
     };
 
     PluginPaint.handler = "paint";

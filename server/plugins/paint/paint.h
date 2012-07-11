@@ -45,6 +45,7 @@ public slots:
     QObject * newItem();
     QObject * newTest();
     QObject * newMap();
+    QObject * init();
 
 private:
     QStringList m_items;
