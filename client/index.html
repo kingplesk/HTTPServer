@@ -371,16 +371,23 @@ Ajax.send("http://test.localhost.lan:88/test", {
     success: function(responseText) {
         console.log('Init ClientHandler', document.cookie, Util.getCookie("sid"));
 
+        PluginManager.register(PluginPaint);
+
+        Comet.onStart.connect(function() {
+            var plugins = new PluginManager();
+        });
+
         Comet.start();
     },
     error: function(statusCode) { console.log('Failure: ' + statusCode); }
 });
 
+/*
 Ajax.send("http://test.localhost.lan:88/test?ajax", {
     success: function(responseText) { console.log("newTest", arguments); },
     error: function(statusCode) { console.log('Failure: ' + statusCode); }
 }, null, JSON.stringify({ handler: 'paint', signal: 'newTest', data: [] }), this);
-
+*/
 </script>
 
 </body>

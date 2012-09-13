@@ -1,3 +1,5 @@
+
+
 console.log("Util");
 
 var Util = (function() {
@@ -254,6 +256,7 @@ var Util = (function() {
 
 })();
 
+
 console.log("Ajax");
 
 var Ajax = (function() {
@@ -287,6 +290,8 @@ var Ajax = (function() {
 
             if(method !== 'POST') postVars = null;
             xhr.send(postVars);
+
+            return xhr;
         }
     };
 
@@ -296,11 +301,12 @@ var Ajax = (function() {
             postVars = postVars || null;
             context = context || null;
 
-            send(url, method, callback, postVars, context);
+            return send(url, method, callback, postVars, context);
         }
     };
 
 })()
+
 
 console.log("Signal");
 
@@ -348,6 +354,7 @@ var Signal = function() {
 
 };
 
+
 console.log("Comet");
 
 var Comet = (function(Ajax, Util, Signal) {
@@ -355,11 +362,14 @@ var Comet = (function(Ajax, Util, Signal) {
     var isRunning = false;
     var tid = (new Date()).getTime();
     var receiverHandler = null;
+    var xhr = null;
+    var started = new Signal();
 
-    var newComet = function(sleep) {
+    var newComet = function(sleep, signal) {
         sleep = sleep || 0;
         setTimeout(function() {
-            Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid, callback);
+            xhr = Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid, callback);
+            signal && signal.emit && signal.emit();
         }, sleep);
     };
 
@@ -398,33 +408,25 @@ var Comet = (function(Ajax, Util, Signal) {
         }
     };
 
-    var start = function(url) {
+    var start = function() {
         if (isRunning) return;
+
+        console.log("Comet:start");
+
         isRunning = true;
-        newComet();
+        newComet(null, started);
 
         if (!receiverHandler) {
             receiverHandler = window.setInterval(receiver, 10000);
         }
     };
 
-    // BEGIN: TestTimer for Signal implmentation
-    /*
-    var timer = function() {
-        // 3 - 7 sec.
-        var timeout = (parseInt((Math.random() * 5), 10) + 3) * 1000;
-        //console.log("Timeout:", timeout);
-
-        setTimeout(function() {
-            var id = parseInt((Math.random() * 7), 10);
-            instance["test" + id] && instance["test" + id].emit("test" + id);
-            timer();
-        }, timeout);
-    };
-
-    timer();
-    */
-    // END: TestTimer
+    var abort = function() {
+        if (isRunning) {
+            xhr && xhr.abort && xhr.abort();
+            isRunning = false;
+        }
+    }
 
     Comet = function Comet() {
         if (instance) {
@@ -434,29 +436,21 @@ var Comet = (function(Ajax, Util, Signal) {
         instance = this;
 
         this.start = start;
+        this.abort = abort;
         this.handlers = {};
+        this.onStart = new Signal();
 
-        this.getHandlers = function(handler, signals) {
-            this.handlers[handler] = {};
+        started.connect(this.onStart.emit, this);
 
-            for (var i in signals) {
-                if (signals.hasOwnProperty(i)) {
-                    this.handlers[handler][i] = new Signal();
-                }
-            }
-
-            return this.handlers[handler];
+        this.setHandlers = function(handler, signals) {
+            this.handlers[handler] = signals;
         }
-
-
-/*
-        this.test0 = new Signal();
-*/
     };
 
     return new Comet();
 
 })(Ajax, Util, Signal);
+
 
 console.log("TrayIcon");
 
@@ -505,6 +499,7 @@ var TrayIcon = (function(Util) {
     return new TrayIcon();
 
 })(Util);
+
 
 console.log("Selector")
 
@@ -764,14 +759,19 @@ var Selector = (function(Util, Signal) {
 })(Util, Signal);
 
 
-var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, Ajax) {
+console.log("PluginManager");
+
+var PluginManager = (function(Comet) {
     var plugins = {};
 
     PluginManager = function PluginManager() {
         for (var handler in plugins) {
             if (plugins.hasOwnProperty(handler)) {
-                //console.log(handler, plugins[handler], plugins[handler].signals);
-                plugins[handler] = new plugins[handler](Comet.getHandlers(handler, plugins[handler].signals));
+                plugins[handler].prototype.signals = plugins[handler].signals;
+                plugins[handler].prototype.handler = handler;
+                plugins[handler] = new plugins[handler]();
+
+                Comet.setHandlers(handler, plugins[handler].signals);
             }
         }
     }
@@ -783,7 +783,7 @@ var PluginManager = (function(Comet, TrayIcon, /*, Clipboard, Widget, */ Util, A
     };
 
     return PluginManager;
-})(Comet, TrayIcon,  /*, Clipboard, Widget, */ Util, Ajax);
+})(Comet);
 
 
 console.log('ColorPicker')
@@ -816,6 +816,7 @@ var ColorPicker = (function(Util, Signal) {
     };
 })(Util, Signal);
 
+
 console.log('PaintPicker')
 
 var PaintPicker = (function(Util, Signal) {
@@ -846,8 +847,6 @@ var PaintPicker = (function(Util, Signal) {
 
             parent.style.width = parent.clientWidth + 94 + "px";
             parent.appendChild(ghost);
-
-            ghost.style.position = "relative";
         }
 
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
@@ -913,13 +912,14 @@ var PaintPicker = (function(Util, Signal) {
     };
 })(Util, Signal);
 
+
 console.log('PluginPaint');
 
-var PluginPaint = (function(Signal, Selector, ColorPicker) {
+var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, Signal, Ajax) {
     var colorPicker = new ColorPicker(Util.$id('colorPicker'));
     var paintPicker = new PaintPicker(Util.$id('paintPicker'));
 
-    PluginPaint = function PluginPaint(cometHandler) {
+    PluginPaint = function PluginPaint() {
         this.color = null;
         this.selector = new Selector(Util.$id("selectRoot"));
 
@@ -1008,7 +1008,7 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             Ajax.send("http://test.localhost.lan:88/test?ajax", {
                 success: function(responseText) { this.selector.reset(); },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
-            }, null, JSON.stringify({ handler: 'paint', signal: 'painted', data: returnVal }), this);
+            }, null, JSON.stringify({ handler: this.handler, signal: 'painted', data: returnVal }), this);
 
             console.log(returnVal);
         }, this);
@@ -1032,48 +1032,34 @@ var PluginPaint = (function(Signal, Selector, ColorPicker) {
             }
         }
 
-        cometHandler.painted.connect(trayIconContent);
-        cometHandler.painted.connect(cometCallback, this);
+        this.signals.painted.connect(trayIconContent);
+        this.signals.painted.connect(cometCallback, this);
 
-        cometHandler.newMap.connect(function() { console.log("newMapHandler") }, this);
+        this.signals.newMap.connect(function() { console.log("newMapHandler") }, this);
 
-        cometHandler.init.connect(init);
+        this.signals.init.connect(init);
 
+/*
         Ajax.send("http://test.localhost.lan:88/test?ajax", {
             success: function(responseText) { console.log("initPaintHandler Ajax", arguments); },
             error: function(statusCode) { console.log('Failure: ' + statusCode); }
         }, null, JSON.stringify({ handler: 'paint', signal: 'init' }), this);
-
+*/
         //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
     };
 
+    //@see: PluginManager: use static signals to extends prototype.signals for use in instances
     PluginPaint.signals = {
         painted : new Signal(),
         newMap : new Signal(),
         init : new Signal(),
     };
 
+    //@see: PluginManager: use static handler for initial registration of Plugin
+    //                     later we extends prototype.handler for use in instances
     PluginPaint.handler = "paint";
 
     return PluginPaint;
-})(Signal, Selector, ColorPicker);
+})(ColorPicker, PaintPicker, Selector, Util, TrayIcon, Signal, Ajax);
 
-
-PluginManager.register(PluginPaint);
-var plugins = new PluginManager();
-
-
-//var PluginTest0 = (function(Comet, TrayIcon/*, Clipboard, Widget*/) {
-/*
-    var trayIconContent = function(data) {
-        var content = '<div style="background-color:red; height: 100%; font-weight:bold;">PluginTest0 - ' + data + '</div>';
-        TrayIcon.show(content);
-    };
-
-    Comet.test0.connect(trayIconContent);
-    //Comet.test0.connect(console.log);
-*/
-    //Clipboard.addIcon(/* html icon */ icon, /* event function callback */ callback);
-
-//})(Comet, TrayIcon);
 
