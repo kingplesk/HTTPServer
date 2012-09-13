@@ -72,6 +72,73 @@ void ClientHandler::sendComet(QString json)
     checkState();
 }
 
+void ClientHandler::sendComet(QString json, bool isInitial)
+{
+    int messageId = 0;
+    if(!isInitial) {
+        messageQueue_ << json;
+        messageId = messageQueue_.lastIndexOf(json);
+    }
+
+
+    /*
+        http://msdn.microsoft.com/de-de/library/dd293599.aspx
+        http://www.cprogramming.com/c++11/c++11-lambda-closures.html
+
+        []          Capture nothing (or, a scorched earth strategy?)
+        [&]         Capture any referenced variable by reference
+        [=]         Capture any referenced variable by making a copy
+        [=, &foo]   Capture any referenced variable by making a copy, but capture variable foo by reference
+        [bar]       Capture bar by making a copy; don't copy anything else
+        [this]      Capture the this pointer of the enclosing class
+    */
+
+    cometIterator([&, this](comet& nextComet) {
+        if (nextComet.http && nextComet.http->state() == QAbstractSocket::ConnectedState) {
+            //stop auto closing timer for current comet
+            if (nextComet.timer->isActive()) {
+                nextComet.timer->stop();
+            }
+
+            if (!isInitial) {
+                lastUpdated = QDateTime::currentDateTime();
+                nextComet.lastUpdated = QDateTime::currentDateTime();
+
+                //qDebug() << "lastMessageId:" << nextComet.lastMessageId <<  "messageId:" << messageId;
+
+                int idx = nextComet.lastMessageId;
+                ++idx;
+
+                //qDebug() << "lastMessageId:" << nextComet.lastMessageId <<  "messageId:" << messageId << "idx:" << idx;
+
+                QStringList messages = messageQueue_.mid(idx);
+
+                //qDebug() << "Messages mid:" << messages;
+
+                nextComet.lastMessageId = messageId;
+
+                //qDebug() << "LastMessagesId:" << nextComet.lastMessageId;
+
+                nextComet.http->sendReply(QByteArray().append("[").append(messages.join(", ")).append("]"));
+            }
+            else {
+                qDebug() << "z0rn";
+                qDebug() << json;
+
+                nextComet.http->sendReply(QByteArray().append("[").append(json).append("]"));
+            }
+        }
+
+        nextComet.http = 0;
+        nextComet.timer = 0;
+        nextComet.tid = '-1';
+    });
+
+    qDebug() << uuid << "MessageQueue: " << messageQueue_;
+
+    checkState();
+}
+
 void ClientHandler::sendComet(comet& nextComet)
 {
     int messageId = messageQueue_.count() - 1;
@@ -281,6 +348,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 */
         QByteArray json;
         QObject * retVal;
+        mi->setChannel(uuid);
         if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QObject *, retVal))) {
             //qDebug() << retVal;
 
@@ -295,9 +363,13 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
             json.append("[]");
         }
 
-        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid);
+        if (json.isEmpty()) {
+            json.append("[]");
+        }
 
-        reply.append("[0, {\"handler\":\"" + handler + "\", \"signal\": \"" + signal + "\",}]");
+        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid, signal == "init");
+
+        reply.append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\"}]" /*, \"data\": " + QString().append(json) + "}]"*/);
     }
     else {
         reply.append("[1, {\"handler\":\"nono-plugin\"}]");

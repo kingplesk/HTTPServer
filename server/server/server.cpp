@@ -81,7 +81,8 @@ void Server::handle()
         ch = new ClientHandler(this);
 
         //connect(ch, SIGNAL(broadcast(QString)), this, SLOT(broadcast(QString)));
-        connect(ch, SIGNAL(broadcast(QString,  QString)), this, SLOT(broadcast(QString, QString)));
+        //connect(ch, SIGNAL(broadcast(QString,  QString)), this, SLOT(broadcast(QString, QString)));
+        connect(ch, SIGNAL(broadcast(QString,  QString, bool)), this, SLOT(broadcast(QString, QString, bool)));
         connect(ch, SIGNAL(deleteClientHandler(QString)), this, SLOT(deleteClientHandler(QString)));
 
         clients_[uuid] = ch;
@@ -93,6 +94,8 @@ void Server::handle()
     }
     else if (http->request_->isAjax()) {
         ch->newRequest(http, p_);
+
+        //QTimer::singleShot(0, ch, )
 
         QDateTime after = QDateTime::currentDateTime();
         qDebug("handle: %d", before.msecsTo(after));
@@ -152,6 +155,23 @@ void Server::broadcast(QString json, QString channel)
     qDebug("broadcast: %d", before.msecsTo(after));
 }
 
+void Server::broadcast(QString json, QString channel, bool isInitial)
+{
+    qDebug() << "JSON:" << json << "CHANNEL:" << channel;
+
+    QDateTime before = QDateTime::currentDateTime();
+
+    QMutableMapIterator<QString, ClientHandler *> i(clients_);
+    while (i.hasNext()) {
+        i.next();
+        if (i.key() == channel) {
+            i.value()->sendComet(json, isInitial);
+        }
+    }
+
+    QDateTime after = QDateTime::currentDateTime();
+    qDebug("broadcast: %d", before.msecsTo(after));
+}
 
 void Server::loadPlugins()
 {

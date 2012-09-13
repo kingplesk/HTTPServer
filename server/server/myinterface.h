@@ -12,6 +12,7 @@ public:
     virtual ~MyInterface() {}
 
     virtual QString getString() = 0;
+    virtual void setChannel(QString channel) = 0;
 };
 
 // associate MyInterface with the unique identifier

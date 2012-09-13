@@ -19,6 +19,11 @@ QString Paint::getString()
     return "Qt Paint Plugins";
 }
 
+void Paint::setChannel(QString channel)
+{
+    this->channel = channel;
+}
+
 QStringList Paint::items() const
 {
     return m_items;
@@ -60,7 +65,7 @@ void Paint::setMap(const QVariantMap &variant)
 
     qDebug() << "setMap data:" << variant;
 
-    m_maps.insert(i.key(), i.value());
+    m_maps.insert(channel, i.value());
 }
 
 QObject * Paint::painted()

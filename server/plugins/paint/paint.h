@@ -27,6 +27,7 @@ class Paint : public QObject, public MyInterface
 public:
     Paint(QObject * parent = 0);
     virtual QString getString();
+    virtual void setChannel(QString channel);
 
     QStringList items() const;
     void setItems(const QStringList& items);
@@ -51,6 +52,7 @@ private:
     QStringList m_items;
     QStringList m_params;
     QStringList m_channels;
+    QString channel;
     QMap<QString, QVariant> m_maps;
     //Painted * painted_;
 };

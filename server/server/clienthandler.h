@@ -38,6 +38,7 @@ class ClientHandler : public QObject
 
         ClientHandler(QObject * parent = 0);
         void sendComet(QString json);
+        void sendComet(QString json, bool isInitial);
         void sendComet(comet& nextComet);
         void newComet(Http * http, QMap<QString, QPluginLoader *>& p);
         void newRequest(Http * http, QMap<QString, QPluginLoader *>& p);
@@ -54,6 +55,7 @@ class ClientHandler : public QObject
     signals:
         void broadcast(QString json);
         void broadcast(QString json, QString channel);
+        void broadcast(QString json, QString channel, bool isInitial);
         void deleteClientHandler(QString uuid);
 
     public slots:

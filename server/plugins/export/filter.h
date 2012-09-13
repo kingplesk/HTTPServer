@@ -15,6 +15,7 @@ class Filter : public QObject, public MyInterface
 
 public:
     virtual QString getString();
+    virtual void setChannel(QString channel);
 };
 
 #endif // FILTER_H
