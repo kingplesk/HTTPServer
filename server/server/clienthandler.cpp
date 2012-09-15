@@ -346,6 +346,8 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         QGenericReturnArgument returnArg("QObject*", &pointer);
         QMetaObject::invokeMethod(object, "newTest", returnArg);
 */
+
+
         QByteArray json;
         QObject * retVal;
         mi->setChannel(uuid);
@@ -367,7 +369,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
             json.append("[]");
         }
 
-        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid, signal == "init");
+        emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid);
 
         reply.append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\"}]" /*, \"data\": " + QString().append(json) + "}]"*/);
     }
