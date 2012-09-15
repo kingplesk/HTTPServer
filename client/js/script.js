@@ -769,6 +769,7 @@ var PluginManager = (function(Comet) {
             if (plugins.hasOwnProperty(handler)) {
                 plugins[handler].prototype.signals = plugins[handler].signals;
                 plugins[handler].prototype.handler = handler;
+
                 plugins[handler] = new plugins[handler]();
 
                 Comet.setHandlers(handler, plugins[handler].signals);
@@ -828,7 +829,7 @@ var PaintPicker = (function(Util, Signal) {
     }
 
     return function(el) {
-        var childNodes = el.childNodes,  selectables = [], selected = parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10), inputEl;
+        var childNodes = el.childNodes,  selectables = [], selected = Util.getCookie("sid") ? parseInt(Util.getCookie("sid").replace(/\{(.*)?\}/i, "$1"), 10) : null, inputEl;
 
         this.onSelect = new Signal();
         this.onNewItem = new Signal();
@@ -852,9 +853,6 @@ var PaintPicker = (function(Util, Signal) {
         for (var i = 0, j = 0, ilen = childNodes.length; i < ilen; i++) {
             childNode = childNodes[i];
             if (childNode.nodeType == 1 && childNode.className == selectableClass) {
-                childNode.id = prefixId + j;
-                selectables[j] = childNode;
-
                 if (selected == j) {
                     Util.addClass(childNode, selectedClass);
                 }
@@ -896,6 +894,9 @@ var PaintPicker = (function(Util, Signal) {
                     inputEl = input;
                 }
 
+                childNode.id = prefixId + j;
+                selectables[j] = childNode;
+
                 j++;
             }
         }
@@ -927,7 +928,7 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
             Util.setCookie("sid", src.getAttribute("data-cid"));
 
             Ajax.send("http://test.localhost.lan:88/test", {
-                success: function(responseText) { location.href = "/"; },
+                success: function(responseText) { /*location.href = "/";*/ console.log("paintPicker.onSelect", arguments); },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
             });
         }, this);
@@ -939,22 +940,27 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
             var id = ghost.id;
             var duration = 1500;
 
+console.log("onNewItem", arguments)
+
             function newChannel(id) {
-                Util.setCookie("sid", "");
+                //Util.setCookie("sid", "");
 
                 var maps = {};
                 maps[Util.getUniqueId()] = name;
 
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
                     success: function(responseText) {
-                        ghost.setAttribute("data-cid", Util.getCookie("sid"));
-                        location.href = "/";
+                        //ghost.setAttribute("data-cid", Util.getCookie("sid"));
+                        //location.href = "/";
+
+                        console.log("paintPicker.onNewItem", arguments)
                     },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
                 }, null, JSON.stringify({ handler: 'paint', signal: 'newMap', data: { 'maps': maps } }), this);
             }
 
-            var nextId = parent.childNodes.length;
+            var nextId = parent.getElementsByTagName('li').length;
+
             ghost.innerHTML = name;
             ghost.style.opacity = '0.5';
             ghost.style.position = 'absolute';
@@ -992,6 +998,8 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
                 ghost.style.position = "relative";
                 ghost.style.opacity = "";
                 ghost.style.left = "";
+
+                Util.removeClass(ghost, "PaintPickerGhost");
 
                 newChannel();
             }

@@ -367,6 +367,8 @@
 <script type="text/javascript">
 
 //Init ClientHandler and Comet test
+console.log("Init ClientHandler and Comet test");
+
 Ajax.send("http://test.localhost.lan:88/test", {
     success: function(responseText) {
         console.log('Init ClientHandler', document.cookie, Util.getCookie("sid"));
