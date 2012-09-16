@@ -925,12 +925,14 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
         this.selector = new Selector(Util.$id("selectRoot"));
 
         paintPicker.onSelect.connect(function(idx, src) {
-            Util.setCookie("sid", src.getAttribute("data-cid"));
+            //Util.setCookie("sid", src.getAttribute("data-cid"));
 
-            Ajax.send("http://test.localhost.lan:88/test", {
+            var map = src.getAttribute("data-cid");
+
+            Ajax.send("http://test.localhost.lan:88/test?ajax", {
                 success: function(responseText) { /*location.href = "/";*/ console.log("paintPicker.onSelect", arguments); },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
-            });
+            }, null, JSON.stringify({ handler: this.handler, signal: 'joinMap', data: { 'map': map, 'user': 'testUser' } }), this);
         }, this);
 
         paintPicker.onNewItem.connect(function(name, src) {
@@ -939,6 +941,7 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
             var ghost = src.cloneNode(false);
             var id = ghost.id;
             var duration = 1500;
+            var handler = this.handler;
 
 console.log("onNewItem", arguments)
 
@@ -956,10 +959,10 @@ console.log("onNewItem", arguments)
                         console.log("paintPicker.onNewItem", arguments)
                     },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
-                }, null, JSON.stringify({ handler: 'paint', signal: 'newMap', data: { 'maps': maps } }), this);
+                }, null, JSON.stringify({ handler: handler, signal: 'newMap', data: { 'name': name, 'user': 'testUser' } }), this);
             }
 
-            var nextId = parent.getElementsByTagName('li').length;
+            var nextId = Util.$tag('li', parent).length;
 
             ghost.innerHTML = name;
             ghost.style.opacity = '0.5';
