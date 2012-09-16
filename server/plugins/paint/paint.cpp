@@ -8,57 +8,52 @@ Paint::Paint(QObject * parent) :
 // paint.cpp
 QString Paint::getString()
 {
-    qDebug() << m_items;
-    qDebug() << m_params;
-    qDebug() << m_channels;
-
-    qDebug() << items();
-    qDebug() << params();
-    qDebug() << channels();
-
     return "Qt Paint Plugins";
 }
 
 void Paint::setChannel(QString channel)
 {
-    this->channel = channel;
+    //this->channel = channel;
 }
 
-QStringList Paint::items() const
+QVariantMap * Paint::newMap(const QVariantMap & data)
 {
-    return m_items;
+    qDebug() << "QObject * Paint::newMap()";
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return new QVariantMap();
 }
 
-QStringList Paint::params() const
+QVariantMap * Paint::joinMap(const QVariantMap & data)
 {
-    return m_params;
+    qDebug() << "QObject * Paint::joinMap()";
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return new QVariantMap();
 }
 
-QStringList Paint::channels() const
+QVariantMap * Paint::painted(const QVariantMap & data)
 {
-    return m_channels;
+    qDebug() << "painted";
+    //return QString("painted ReturnValue");
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return new QVariantMap();
 }
 
-QVariantMap Paint::maps() const
+QVariantMap * Paint::init()
 {
-    return m_maps;
+    qDebug() << "QObject * Paint::init()";
+
+    QObject * object = dynamic_cast<QObject *>(this);
+
+    return new QVariantMap();
 }
 
-void Paint::setItems(const QStringList &items)
-{
-    m_items = items;
-}
-
-void Paint::setParams(const QStringList &params)
-{
-    m_params = params;
-}
-
-void Paint::addChannel(const QStringList &channel)
-{
-    m_channels << channel;
-}
-
+/*
 void Paint::setMap(const QVariantMap &variant)
 {
     QVariantMap::const_iterator i = variant.constBegin();
@@ -67,17 +62,8 @@ void Paint::setMap(const QVariantMap &variant)
 
     m_maps.insert(channel, i.value());
 }
-
-QObject * Paint::painted()
-{
-    qDebug() << "painted";
-    //return QString("painted ReturnValue");
-
-    QObject * object = dynamic_cast<QObject *>(this);
-
-    return object;
-}
-
+*/
+/*
 QObject * Paint::newItem()
 {
     qDebug() << "newItem";
@@ -96,25 +82,7 @@ QObject * Paint::newTest()
 
     return object;
 }
-
-QObject * Paint::newMap()
-{
-    qDebug() << "QObject * Paint::setMap()";
-
-    QObject * object = dynamic_cast<QObject *>(this);
-
-    return object;
-}
-
-QObject * Paint::init()
-{
-    qDebug() << "QObject * Paint::init()";
-
-    QObject * object = dynamic_cast<QObject *>(this);
-
-    return object;
-}
-
+*/
 
 // export the plugin
 // the TARGET should be "paint" also

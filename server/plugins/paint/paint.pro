@@ -9,10 +9,8 @@ DESTDIR      = $${BIN_DIR}
 TEMPLATE      = lib
 CONFIG       += plugin
 INCLUDEPATH  += ../..
-HEADERS       = paint.h \
-                painted.h
-SOURCES       = paint.cpp \
-                painted.cpp
+HEADERS       = paint.h
+SOURCES       = paint.cpp
 TARGET        = $$qtLibraryTarget(_paint)
 
 sources.files = $$SOURCES $$HEADERS paint.pro

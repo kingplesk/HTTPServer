@@ -320,7 +320,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
         signal = variantMap["signal"].toString();
     }
 
-    QVariantMap variantData = variantMap["data"].toMap();
+    const QVariantMap & variantData = variantMap["data"].toMap();
 
     QString reply("");
     if (p.contains(handler)) {
@@ -328,7 +328,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
         QObject *object = dynamic_cast<QObject *>(mi);
         //convert qvariantmap into object
-        QJson::QObjectHelper::qvariant2qobject(variantData, object);
+        //QJson::QObjectHelper::qvariant2qobject(variantData, object);
         //convert object to json
 
 
@@ -349,16 +349,17 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
 
         QByteArray json;
-        QObject * retVal;
+        //QObject * retVal;
+        QVariantMap * retVal;
         mi->setChannel(uuid);
-        if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QObject *, retVal))) {
+        if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QVariantMap *, retVal), Q_ARG(const QVariantMap  &, variantData))) {
             //qDebug() << retVal;
 
             qDebug() << "retVal";
 
-            QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
+            //QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
             QJson::Serializer serializer;
-            json = serializer.serialize(newVariantMap);
+            json = serializer.serialize(*retVal);
             //qDebug() << "JOSN-STRING-TEST-1: " << json;
         }
         else {
