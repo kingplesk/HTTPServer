@@ -21,13 +21,13 @@ public:
     virtual void setChannel(QString channel);
 
 public slots:
-    QVariantMap * newMap(const QVariantMap &);
-    QVariantMap * joinMap(const QVariantMap &);
-    QVariantMap * painted(const QVariantMap &);
-    QVariantMap * init();
+    QVariantMap newMap(const QVariantMap &);
+    QVariantMap joinMap(const QVariantMap &);
+    QVariantMap painted(const QVariantMap &);
+    QVariantMap init();
 
 private:
-    QMap<QString, QVariant> maps;
+    QMap<int, QVariant> maps;
 };
 
 #endif // PAINT_H

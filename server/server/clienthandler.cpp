@@ -350,16 +350,16 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
         QByteArray json;
         //QObject * retVal;
-        QVariantMap * retVal;
+        QVariantMap retVal;
         mi->setChannel(uuid);
-        if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QVariantMap *, retVal), Q_ARG(const QVariantMap  &, variantData))) {
+        if (QMetaObject::invokeMethod(object, cstr, Qt::DirectConnection, Q_RETURN_ARG(QVariantMap, retVal), Q_ARG(const QVariantMap  &, variantData))) {
             //qDebug() << retVal;
 
             qDebug() << "retVal";
 
             //QVariantMap newVariantMap = QJson::QObjectHelper::qobject2qvariant(retVal);
             QJson::Serializer serializer;
-            json = serializer.serialize(*retVal);
+            json = serializer.serialize(retVal);
             //qDebug() << "JOSN-STRING-TEST-1: " << json;
         }
         else {
@@ -372,7 +372,7 @@ void ClientHandler::newRequest(Http * http, QMap<QString, QPluginLoader *>& p)
 
         emit broadcast(QString().append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]"), uuid);
 
-        reply.append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\"}]" /*, \"data\": " + QString().append(json) + "}]"*/);
+        reply.append("[0, {\"handler\": \"" + handler + "\", \"signal\": \"" + signal + "\", \"data\": " + QString().append(json) + "}]");
     }
     else {
         reply.append("[1, {\"handler\":\"nono-plugin\"}]");

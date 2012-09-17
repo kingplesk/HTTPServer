@@ -16,41 +16,47 @@ void Paint::setChannel(QString channel)
     //this->channel = channel;
 }
 
-QVariantMap * Paint::newMap(const QVariantMap & data)
+QVariantMap Paint::newMap(const QVariantMap & data)
 {
-    qDebug() << "QObject * Paint::newMap()";
+    int channel = 0;
 
-    QObject * object = dynamic_cast<QObject *>(this);
+    if (!maps.isEmpty()) channel = (--maps.end()).key() + 1;
 
-    return new QVariantMap();
+    QVariantMap items(data);
+    maps.insert(channel, QVariant(items));
+    items.insert("channel", QVariant(channel).toInt());
+
+    qDebug() << items;
+
+    return items;
 }
 
-QVariantMap * Paint::joinMap(const QVariantMap & data)
+QVariantMap Paint::joinMap(const QVariantMap & data)
 {
     qDebug() << "QObject * Paint::joinMap()";
 
     QObject * object = dynamic_cast<QObject *>(this);
 
-    return new QVariantMap();
+    return QVariantMap();
 }
 
-QVariantMap * Paint::painted(const QVariantMap & data)
+QVariantMap Paint::painted(const QVariantMap & data)
 {
     qDebug() << "painted";
     //return QString("painted ReturnValue");
 
     QObject * object = dynamic_cast<QObject *>(this);
 
-    return new QVariantMap();
+    return QVariantMap();
 }
 
-QVariantMap * Paint::init()
+QVariantMap Paint::init()
 {
     qDebug() << "QObject * Paint::init()";
 
     QObject * object = dynamic_cast<QObject *>(this);
 
-    return new QVariantMap();
+    return QVariantMap();
 }
 
 /*
