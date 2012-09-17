@@ -282,7 +282,7 @@ var Ajax = (function() {
         if (xhr) {
             xhr.onreadystatechange = function() {
                 if (xhr.readyState !== 4) return;
-                if (xhr.status === 200) callback.success && callback.success.call(context, xhr.responseText, xhr.responseXML);
+                if (xhr.status === 200) callback.success && callback.success.call(context, eval(xhr.responseText), xhr.responseXML);
                 else callback.error && callback.error.call(context, xhr.status);
             };
             xhr.open(method, url, true);
@@ -364,12 +364,18 @@ var Comet = (function(Ajax, Util, Signal) {
     var receiverHandler = null;
     var xhr = null;
     var started = new Signal();
+    var channel = null;
+
+    console.log(" --- Init Channel ---", channel);
 
     var newComet = function(sleep, signal) {
         sleep = sleep || 0;
         setTimeout(function() {
-            xhr = Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid, callback);
-            signal && signal.emit && signal.emit();
+            xhr = Ajax.send("http://test.localhost.lan:88/test?notify=" + Util.getUniqueId() + "&tid=" + tid + (channel ? "&channel=" + channel : ""), callback);
+            if (signal && signal.emit) {
+                signal.emit();
+                started = null;
+            }
         }, sleep);
     };
 
@@ -413,6 +419,13 @@ var Comet = (function(Ajax, Util, Signal) {
 
         console.log("Comet:start");
 
+        var matches = location.hash.match(/channel\.(\d+)/i);
+        if (matches) {
+            channel = parseInt(matches[1], 10);
+        }
+
+        console.log(" --- Restart on Channel ---", channel);
+
         isRunning = true;
         newComet(null, started);
 
@@ -423,7 +436,11 @@ var Comet = (function(Ajax, Util, Signal) {
 
     var abort = function() {
         if (isRunning) {
+            if (receiverHandler) window.clearInterval(receiverHandler);
+            receiverHandler = null;
+
             xhr && xhr.abort && xhr.abort();
+
             isRunning = false;
         }
     }
@@ -929,8 +946,16 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
 
             var map = src.getAttribute("data-cid");
 
+            Comet.abort();
+
+            log("onSelect", map);
+
             Ajax.send("http://test.localhost.lan:88/test?ajax", {
-                success: function(responseText) { /*location.href = "/";*/ console.log("paintPicker.onSelect", arguments); },
+                success: function(data) {
+                    location.hash = "channel." + map;
+
+                    Comet.start();
+                },
                 error: function(statusCode) { console.log('Failure: ' + statusCode); }
             }, null, JSON.stringify({ handler: this.handler, signal: 'joinMap', data: { 'map': map, 'user': 'testUser' } }), this);
         }, this);
@@ -946,17 +971,13 @@ var PluginPaint = (function(ColorPicker, PaintPicker, Selector, Util, TrayIcon, 
 console.log("onNewItem", arguments)
 
             function newChannel(id) {
-                //Util.setCookie("sid", "");
-
-                var maps = {};
-                maps[Util.getUniqueId()] = name;
-
                 Ajax.send("http://test.localhost.lan:88/test?ajax", {
-                    success: function(responseText) {
-                        //ghost.setAttribute("data-cid", Util.getCookie("sid"));
-                        //location.href = "/";
+                    success: function(data) {
+                        ghost.setAttribute("data-cid", data[1].data.channel);
+                        location.hash = "channel." + data[1].data.channel;
 
-                        console.log("paintPicker.onNewItem", arguments)
+                        Comet.abort();
+                        Comet.start();
                     },
                     error: function(statusCode) { console.log('Failure: ' + statusCode); }
                 }, null, JSON.stringify({ handler: handler, signal: 'newMap', data: { 'name': name, 'user': 'testUser' } }), this);
